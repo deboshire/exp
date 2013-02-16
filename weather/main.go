@@ -9,22 +9,44 @@ import (
 	"time"
 )
 
-type MarkovChain struct {
-	States int
-	Trans  []float64
+type MarkovChain interface {
+	States() int
+	Next(state int) int
 }
 
-func (ch *MarkovChain) Next(state int) int {
+type markovChain struct {
+	states int
+	trans  []float64
+}
+
+func (ch *markovChain) States() int {
+	return ch.states
+}
+
+func (ch *markovChain) Next(state int) int {
 	r := rand.Float64()
 	var cur float64
-	st := ch.States * state
-	for i, v := range ch.Trans[st : st+ch.States] {
+	st := ch.states * state
+	for i, v := range ch.trans[st : st+ch.states] {
 		cur += v
 		if r <= cur {
 			return i
 		}
 	}
-	return ch.States - 1
+	return ch.states - 1
+}
+
+func StationaryDistr(ch MarkovChain, count int) []float64 {
+	res := make([]float64, ch.States())
+	cur := 0
+	for i := 0; i < count; i++ {
+		cur = ch.Next(cur)
+		res[cur]++
+	}
+	for i := 0; i < ch.States(); i++ {
+		res[i] /= float64(count)
+	}
+	return res
 }
 
 func main() {
@@ -35,9 +57,9 @@ func main() {
 		/* Cloudy */ 0.4, 0.4, 0.2,
 		/* Rainy */ 0.2, 0.6, 0.2,
 	}
-	chain := &MarkovChain{
-		States: len(weather),
-		Trans:  day2day,
+	chain := &markovChain{
+		states: len(weather),
+		trans:  day2day,
 	}
 	cur := 0
 	for i := 0; i < 20; i++ {
@@ -45,4 +67,8 @@ func main() {
 		cur = chain.Next(cur)
 	}
 	fmt.Printf("\n")
+	distr := StationaryDistr(chain, 100000000)
+	for i, v := range weather {
+		fmt.Printf("%s: %f\n", v, distr[i])
+	}
 }
