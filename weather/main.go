@@ -49,6 +49,24 @@ func StationaryDistr(ch MarkovChain, count int) []float64 {
 	return res
 }
 
+// Exercise 2.8.2 (b)
+func Simulate(ch MarkovChain, names []string, count int) {
+	cur := 0
+	for i := 0; i < 20; i++ {
+		fmt.Printf("%s\n", names[cur])
+		cur = ch.Next(cur)
+	}
+	fmt.Printf("\n")
+}
+
+// Exercise 2.8.2 (c)
+func PrintStationaryDistr(ch MarkovChain, names []string, count int) {
+	distr := StationaryDistr(ch, count)
+	for i, v := range names {
+		fmt.Printf("%s: %f\n", v, distr[i])
+	}
+}
+
 func main() {
 	rand.Seed(time.Now().UnixNano())
 	weather := []string{"Sunny", "Cloudy", "Rainy"}
@@ -57,18 +75,10 @@ func main() {
 		/* Cloudy */ 0.4, 0.4, 0.2,
 		/* Rainy */ 0.2, 0.6, 0.2,
 	}
-	chain := &markovChain{
+	ch := &markovChain{
 		states: len(weather),
 		trans:  day2day,
 	}
-	cur := 0
-	for i := 0; i < 20; i++ {
-		fmt.Printf("%s\n", weather[cur])
-		cur = chain.Next(cur)
-	}
-	fmt.Printf("\n")
-	distr := StationaryDistr(chain, 100000000)
-	for i, v := range weather {
-		fmt.Printf("%s: %f\n", v, distr[i])
-	}
+	Simulate(ch, weather, 20)
+	PrintStationaryDistr(ch, weather, 100000000)
 }
