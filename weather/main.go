@@ -16,6 +16,13 @@ type MarkovChain interface {
 	Trans() []float64
 }
 
+type MeasurementModel interface {
+	StatesA() int
+	StatesB() int
+	Next(a int) int
+	P(a, b int) float64
+}
+
 type markovChain struct {
 	states int
 	trans  []float64
@@ -40,6 +47,32 @@ func (ch *markovChain) Next(state int) int {
 		}
 	}
 	return ch.states - 1
+}
+
+type measurementModel struct {
+	statesA int
+	statesB int
+	trans   []float64
+}
+
+func (m *measurementModel) StatesA() int { return m.statesA }
+func (m *measurementModel) StatesB() int { return m.statesB }
+
+func (m *measurementModel) Next(a int) int {
+	r := rand.Float64()
+	var cur float64
+	st := a * m.statesB
+	for i, v := range m.trans[st : st+m.statesB] {
+		cur += v
+		if r <= cur {
+			return i
+		}
+	}
+	return m.statesB - 1
+}
+
+func (m *measurementModel) P(a, b int) float64 {
+	return m.trans[a*m.statesB+b]
 }
 
 func StationaryDistr(ch MarkovChain, count int) []float64 {
@@ -115,6 +148,16 @@ func PrintStationaryEntropy(ch MarkovChain) {
 	PrintEntropy(StationaryDistr2(ch, 10))
 }
 
+func SimulateMeasurements(ch MarkovChain, mm MeasurementModel, names []string, count int) {
+	cur := 0 // Sunny
+	for i := 1; i <= count; i++ {
+		cur = ch.Next(cur)
+		curm := mm.Next(cur)
+		fmt.Printf("Step %d, weather: %s, we see: %s\n", i, names[cur], names[curm])
+	}
+	fmt.Println()
+}
+
 func main() {
 	rand.Seed(time.Now().UnixNano())
 	weather := []string{"Sunny", "Cloudy", "Rainy"}
@@ -127,8 +170,23 @@ func main() {
 		states: len(weather),
 		trans:  day2day,
 	}
+
+	real2view := []float64{
+		/* Sunny */ 0.6, 0.4, 0,
+		/* Cloudy */ 0.3, 0.7, 0,
+		/* Rainy */ 0, 0, 1,
+	}
+
+	mm := &measurementModel{
+		statesA: len(weather),
+		statesB: len(weather),
+		trans:   real2view,
+	}
+
 	Simulate(ch, weather, 20)
 	PrintStationaryDistr(ch, weather, 100000000)
 	PrintStationaryDistr2(ch, weather, 10)
 	PrintStationaryEntropy(ch)
+
+	SimulateMeasurements(ch, mm, weather, 30)
 }
