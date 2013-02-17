@@ -5,6 +5,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"math/rand"
 	"time"
 )
@@ -101,6 +102,19 @@ func PrintStationaryDistr2(ch MarkovChain, names []string, count int) {
 	PrintDistr(StationaryDistr2(ch, count), names)
 }
 
+func PrintEntropy(p []float64) {
+	var res float64
+	for _, v := range p {
+		res -= v * math.Log2(v)
+	}
+	fmt.Printf("Entropy: %f\n", res)
+}
+
+// Exercise 2.8.2 (e)
+func PrintStationaryEntropy(ch MarkovChain) {
+	PrintEntropy(StationaryDistr2(ch, 10))
+}
+
 func main() {
 	rand.Seed(time.Now().UnixNano())
 	weather := []string{"Sunny", "Cloudy", "Rainy"}
@@ -115,12 +129,6 @@ func main() {
 	}
 	Simulate(ch, weather, 20)
 	PrintStationaryDistr(ch, weather, 100000000)
-	PrintStationaryDistr2(ch, weather, 0)
-	PrintStationaryDistr2(ch, weather, 1)
-	PrintStationaryDistr2(ch, weather, 2)
-	PrintStationaryDistr2(ch, weather, 3)
-	PrintStationaryDistr2(ch, weather, 4)
-	PrintStationaryDistr2(ch, weather, 5)
-	PrintStationaryDistr2(ch, weather, 6)
-
+	PrintStationaryDistr2(ch, weather, 10)
+	PrintStationaryEntropy(ch)
 }
