@@ -150,6 +150,7 @@ func PrintStationaryEntropy(ch MarkovChain) {
 
 func SimulateMeasurements(ch MarkovChain, mm MeasurementModel, names []string, count int) {
 	cur := 0 // Sunny
+	fmt.Printf("Initially, weather is %s\n", names[cur])
 	for i := 1; i <= count; i++ {
 		cur = ch.Next(cur)
 		curm := mm.Next(cur)
