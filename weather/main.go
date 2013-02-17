@@ -12,6 +12,7 @@ import (
 type MarkovChain interface {
 	States() int
 	Next(state int) int
+	Trans() []float64
 }
 
 type markovChain struct {
@@ -21,6 +22,10 @@ type markovChain struct {
 
 func (ch *markovChain) States() int {
 	return ch.states
+}
+
+func (ch *markovChain) Trans() []float64 {
+	return ch.trans
 }
 
 func (ch *markovChain) Next(state int) int {
@@ -49,6 +54,27 @@ func StationaryDistr(ch MarkovChain, count int) []float64 {
 	return res
 }
 
+func Square(n int, p []float64) []float64 {
+	res := make([]float64, n*n)
+	for i := 0; i < n; i++ {
+		for j := 0; j < n; j++ {
+			ind := i*n + j
+			for k := 0; k < n; k++ {
+				res[ind] += p[i*n+k] * p[k*n+j]
+			}
+		}
+	}
+	return res
+}
+
+func StationaryDistr2(ch MarkovChain, count int) []float64 {
+	p := ch.Trans()
+	for i := 0; i < count; i++ {
+		p = Square(ch.States(), p)
+	}
+	return p[0:ch.States()]
+}
+
 // Exercise 2.8.2 (b)
 func Simulate(ch MarkovChain, names []string, count int) {
 	cur := 0
@@ -59,12 +85,20 @@ func Simulate(ch MarkovChain, names []string, count int) {
 	fmt.Printf("\n")
 }
 
+func PrintDistr(p []float64, names []string) {
+	for i, v := range names {
+		fmt.Printf("%s: %f\n", v, p[i])
+	}
+	fmt.Println()
+}
+
 // Exercise 2.8.2 (c)
 func PrintStationaryDistr(ch MarkovChain, names []string, count int) {
-	distr := StationaryDistr(ch, count)
-	for i, v := range names {
-		fmt.Printf("%s: %f\n", v, distr[i])
-	}
+	PrintDistr(StationaryDistr(ch, count), names)
+}
+
+func PrintStationaryDistr2(ch MarkovChain, names []string, count int) {
+	PrintDistr(StationaryDistr2(ch, count), names)
 }
 
 func main() {
@@ -81,4 +115,12 @@ func main() {
 	}
 	Simulate(ch, weather, 20)
 	PrintStationaryDistr(ch, weather, 100000000)
+	PrintStationaryDistr2(ch, weather, 0)
+	PrintStationaryDistr2(ch, weather, 1)
+	PrintStationaryDistr2(ch, weather, 2)
+	PrintStationaryDistr2(ch, weather, 3)
+	PrintStationaryDistr2(ch, weather, 4)
+	PrintStationaryDistr2(ch, weather, 5)
+	PrintStationaryDistr2(ch, weather, 6)
+
 }
