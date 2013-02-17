@@ -14,6 +14,7 @@ type MarkovChain interface {
 	States() int
 	Next(state int) int
 	Trans() []float64
+	P(a, b int) float64
 }
 
 type MeasurementModel interface {
@@ -34,6 +35,10 @@ func (ch *markovChain) States() int {
 
 func (ch *markovChain) Trans() []float64 {
 	return ch.trans
+}
+
+func (ch *markovChain) P(a, b int) float64 {
+	return ch.trans[a*ch.states+b]
 }
 
 func (ch *markovChain) Next(state int) int {
@@ -152,13 +157,39 @@ func PrintStationaryEntropy(ch MarkovChain) {
 	PrintEntropy(StationaryDistr2(ch, 10))
 }
 
+func Predict(ch MarkovChain, bel []float64) []float64 {
+	res := make([]float64, ch.States())
+	for i := 0; i < ch.States(); i++ {
+		for j := 0; j < ch.States(); j++ {
+			res[j] += bel[i] * ch.P(i, j)
+		}
+	}
+	return res
+}
+
+// Simulate Hidden Markov Model using Bayes Filter
 func SimulateMeasurements(ch MarkovChain, mm MeasurementModel, names []string, count int) {
 	cur := 0 // Sunny
+	bel := []float64{1, 0, 0}
 	fmt.Printf("Initially, weather is %s\n", names[cur])
 	for i := 1; i <= count; i++ {
+		predict := Predict(ch, bel)
 		cur = ch.Next(cur)
 		curm := mm.Next(cur)
-		fmt.Printf("Step %d, weather: %s, we see: %s\n", i, names[cur], names[curm])
+		bel = []float64{0, 0, 0}
+		var sum float64
+		for j := 0; j < len(bel); j++ {
+			bel[j] = mm.P(j, curm) * predict[j]
+			sum += bel[j]
+		}
+		// Normalize belief
+		for j := 0; j < len(bel); j++ {
+			bel[j] = bel[j] / sum
+		}
+
+		fmt.Printf("Step %d, weather: %s, we see: %s, belief: ", i, names[cur], names[curm])
+		PrintDistr(bel, names)
+		fmt.Println()
 	}
 	fmt.Println()
 }
