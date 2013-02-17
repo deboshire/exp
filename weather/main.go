@@ -120,10 +120,14 @@ func Simulate(ch MarkovChain, names []string, count int) {
 }
 
 func PrintDistr(p []float64, names []string) {
+	fmt.Print("[ ")
 	for i, v := range names {
-		fmt.Printf("%s: %f\n", v, p[i])
+		if i > 0 {
+			fmt.Print(", ")
+		}
+		fmt.Printf("%s: %f", v, p[i])
 	}
-	fmt.Println()
+	fmt.Print(" ] \n")
 }
 
 // Exercise 2.8.2 (c)
