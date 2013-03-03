@@ -61,40 +61,37 @@ const (
 )
 
 type Array struct {
-	name       string
-	dimensions []int32
-	data       []float64
+	Name       string
+	Dimensions []int32
+	Data       []float64
 }
 
-func pad(reader io.Reader, size uint32, err error) error {
-	if err != nil {
-		return err
-	}
-
+func pad(reader io.Reader, size uint32) error {
 	var extra = (8 - size%8) % 8
 	if extra != 0 {
 		tmp := make([]byte, extra)
-		_, err = io.ReadFull(reader, tmp)
+		_, err := io.ReadFull(reader, tmp)
 		return err
 	}
 
 	return nil
 }
 
-func readAllElements(reader io.Reader, encoding binary.ByteOrder) (result []interface{}, err error) {
-	res := make([]interface{}, 0)
+func readAllElements(reader io.Reader, encoding binary.ByteOrder) (res []interface{}, err error) {
+	res = make([]interface{}, 0)
+
 	for {
-		e, err := readDataElement(reader, encoding)
-		if err != nil {
-			if err == io.EOF {
-				return res, nil
-			}
-			return res, err
+		var elem interface{}
+		if elem, err = readDataElement(reader, encoding); err != nil {
+			break
 		}
-		res = append(res, e)
+		res = append(res, elem)
+	}
+	if err == io.EOF {
+		return res, nil
 	}
 
-	return res, nil
+	return
 }
 
 func charsToString(ca []int8) string {
@@ -131,23 +128,22 @@ func uint8ToFloat64(data []uint8) []float64 {
 
 func readDataElement(reader io.Reader, encoding binary.ByteOrder) (result interface{}, err error) {
 	var t tag
-	err = binary.Read(reader, encoding, &t)
-	if err != nil {
+	if err = binary.Read(reader, encoding, &t); err != nil {
 		return
 	}
 
 	if t.Type&0xffff0000 != 0 {
-		panic("Unsupported short data")
+		return nil, errors.New(fmt.Sprintf("Unsupported inline data: %s", t))
 	}
 
 	tmp := make([]byte, t.Size)
-	_, err = io.ReadFull(reader, tmp)
-	if t.Type != miCOMPRESSED {
-		err = pad(reader, t.Size, err)
+	if _, err = io.ReadFull(reader, tmp); err != nil {
+		return nil, errors.New(fmt.Sprintf("Can't read %s bytes: %s", t.Size, err))
 	}
-	if err != nil {
-		panic(fmt.Sprintf("Can't read %s bytes: %s", t.Size, err))
-		return
+	if t.Type != miCOMPRESSED {
+		if err = pad(reader, t.Size); err != nil {
+			return nil, errors.New(fmt.Sprintf("Can't pad %s", err))
+		}
 	}
 
 	tmpReader := bytes.NewReader(tmp)
@@ -205,9 +201,9 @@ func readDataElement(reader io.Reader, encoding binary.ByteOrder) (result interf
 		case mxDOUBLE_CLASS:
 			switch data := elems[3].(type) {
 			case []int8:
-				return Array{name: charsToString(name), dimensions: dims, data: int8ToFloat64(data)}, nil
+				return Array{Name: charsToString(name), Dimensions: dims, Data: int8ToFloat64(data)}, nil
 			case []uint8:
-				return Array{name: charsToString(name), dimensions: dims, data: uint8ToFloat64(data)}, nil
+				return Array{Name: charsToString(name), Dimensions: dims, Data: uint8ToFloat64(data)}, nil
 			default:
 				return elems, errors.New(fmt.Sprintf("Unsupported elems: %s", reflect.TypeOf(elems[3])))
 			}
@@ -220,15 +216,13 @@ func readDataElement(reader io.Reader, encoding binary.ByteOrder) (result interf
 		return nil, errors.New(fmt.Sprintf("Unsupported type %s", t))
 	}
 
-	panic("shouldn't happen")
-	return nil, nil
+	panic("unreachable")
 }
 
 func Read(reader io.Reader) (result []interface{}, err error) {
 	var h header
 	var encoding binary.ByteOrder = binary.LittleEndian
-	err = binary.Read(reader, encoding, &h)
-	if err != nil {
+	if err = binary.Read(reader, encoding, &h); err != nil {
 		return
 	}
 
