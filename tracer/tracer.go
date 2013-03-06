@@ -5,9 +5,9 @@
 package tracer
 
 import (
-	"io"
 	"fmt"
 	"github.com/deboshire/exp/math/vector"
+	"io"
 )
 
 type Tracer interface {
@@ -22,23 +22,22 @@ type tracerImpl struct {
 }
 
 func (t tracerImpl) TraceFloat64(label string, value float64) {
-	fmt.Fprintf(t.w, "%s%s : %v\n", t.p, label, value) 
+	fmt.Fprintf(t.w, "%s%s : %v\n", t.p, label, value)
 }
 
 func (t tracerImpl) TraceInt(label string, value int) {
-	fmt.Fprintf(t.w, "%s%s : %v\n", t.p, label, value) 
+	fmt.Fprintf(t.w, "%s%s : %v\n", t.p, label, value)
 }
 
 func (t tracerImpl) TraceV64(label string, value vector.V64) {
-	fmt.Fprintf(t.w, "%s%s : %v\n", t.p, label, value) 
+	fmt.Fprintf(t.w, "%s%s : %v\n", t.p, label, value)
 }
 
 func NewTracer(prefix string, writer io.Writer) Tracer {
 	return tracerImpl{p: prefix, w: writer}
 }
 
-type nullTracer struct { }
-
+type nullTracer struct{}
 
 func (t nullTracer) TraceFloat64(label string, value float64) {
 }

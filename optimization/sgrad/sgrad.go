@@ -23,8 +23,9 @@ type State struct {
 	Value  float64
 }
 
-// Termination criterion generates a double tolerance that is compared to fixed epsilon
-// (precision)
+// Termination criterion generates a double error. The error is compared to epsilon
+// passed to Minimize function and as soon as it is less than epsilon, optimization
+// process is terminated.
 type TerminationCriterion interface {
 	ShouldTerminate(s *State) float64
 }
@@ -73,6 +74,7 @@ func Minimize(f ObjectiveFunc, initial vector.V64, epsilon float64, term Termina
 		maxDist := 0.0
 
 		// todo(mike): there's some theory about choosing alpha.
+		// http://leon.bottou.org/slides/largescale/lstut.pdf
 		alpha := .1 / (1 + math.Sqrt(float64(pass)))
 		t.TraceFloat64("alpha", alpha)
 
@@ -85,8 +87,8 @@ func Minimize(f ObjectiveFunc, initial vector.V64, epsilon float64, term Termina
 			t.TraceV64("grad", grad)
 			t.TraceFloat64("y", y)
 
-			grad.Scale(-alpha)
-			grad.Plus(x)
+			grad.Mul(-alpha)
+			grad.Add(x)
 
 			dist := x.Dist2(grad)
 			if dist > maxDist {

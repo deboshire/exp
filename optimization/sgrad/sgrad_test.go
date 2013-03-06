@@ -1,10 +1,9 @@
 package sgrad
 
 import (
-	"fmt"
 	"github.com/deboshire/exp/math/vector"
-	"math/rand"
 	"math"
+	"math/rand"
 	"testing"
 )
 
@@ -16,12 +15,12 @@ func TestLeastSquaresPrecise(t *testing.T) {
 
 	term := RelativeMeanImprovementCriterion{NumItersToAvg: 10}
 	v, coords := Minimize(f, vector.Zeroes(2), 1e-10, &term, nil)
-	fmt.Println("Value: ", v, "Coords: ", coords)
-	
+	t.Log("Value: ", v, "Coords: ", coords)
+
 	if math.Abs(coords[0]) > 1e-2 {
 		t.Error("coords[0] != 0: %s", coords[0])
 	}
-	if math.Abs(coords[1] - 1) > 1e-2 {
+	if math.Abs(coords[1]-1) > 1e-2 {
 		t.Error("coords[1] != 1: %s", coords[0])
 	}
 }
@@ -37,11 +36,11 @@ func TestLeastSquares(t *testing.T) {
 
 	term := RelativeMeanImprovementCriterion{NumItersToAvg: 10}
 	v, coords := Minimize(f, vector.Zeroes(2), 1e-8, &term, nil)
-	fmt.Println("Value: ", v, "Coords: ", coords)
-	if math.Abs(coords[0] - 3.5) > 1e-1 {
+	t.Log("Value: ", v, "Coords: ", coords)
+	if math.Abs(coords[0]-3.5) > 1e-1 {
 		t.Error("coords[0] != 3.5: %s", coords[0])
 	}
-	if math.Abs(coords[1] - 1.4) > 1e-1 {
+	if math.Abs(coords[1]-1.4) > 1e-1 {
 		t.Error("coords[1] != 1.4: %s", coords[0])
 	}
 }
