@@ -61,9 +61,9 @@ const (
 )
 
 type Array struct {
-	Name       string
-	Dimensions []int32
-	Data       []float64
+	Name string
+	Dim  []int32
+	Data []float64
 }
 
 func pad(reader io.Reader, size uint32) error {
@@ -78,8 +78,6 @@ func pad(reader io.Reader, size uint32) error {
 }
 
 func readAllElements(reader io.Reader, encoding binary.ByteOrder) (res []interface{}, err error) {
-	res = make([]interface{}, 0)
-
 	for {
 		var elem interface{}
 		if elem, err = readDataElement(reader, encoding); err != nil {
@@ -201,9 +199,9 @@ func readDataElement(reader io.Reader, encoding binary.ByteOrder) (result interf
 		case mxDOUBLE_CLASS:
 			switch data := elems[3].(type) {
 			case []int8:
-				return Array{Name: charsToString(name), Dimensions: dims, Data: int8ToFloat64(data)}, nil
+				return Array{Name: charsToString(name), Dim: dims, Data: int8ToFloat64(data)}, nil
 			case []uint8:
-				return Array{Name: charsToString(name), Dimensions: dims, Data: uint8ToFloat64(data)}, nil
+				return Array{Name: charsToString(name), Dim: dims, Data: uint8ToFloat64(data)}, nil
 			default:
 				return elems, errors.New(fmt.Sprintf("Unsupported elems: %s", reflect.TypeOf(elems[3])))
 			}
@@ -227,8 +225,7 @@ func Read(reader io.Reader) (result []interface{}, err error) {
 	}
 
 	if h.Version != 0x0100 {
-		err = errors.New("Unsupported version")
-		return
+		return nil, fmt.Errorf("Unsupported version: 0x%x", h.Version)
 	}
 
 	if h.Endian != 0x4d49 {

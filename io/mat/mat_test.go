@@ -34,8 +34,8 @@ func TestFail(t *testing.T) {
 		t.Fatalf("Bad name: %s", arr.Name)
 	}
 
-	if len(arr.Dimensions) != 2 || arr.Dimensions[0] != 200 || arr.Dimensions[1] != 129 {
-		t.Fatalf("Bad dims: %s", arr.Dimensions)
+	if len(arr.Dim) != 2 || arr.Dim[0] != 200 || arr.Dim[1] != 129 {
+		t.Fatalf("Bad dims: %s", arr.Dim)
 	}
 
 	if len(arr.Data) != 200*129 {
