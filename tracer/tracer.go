@@ -1,5 +1,6 @@
 /*
 	Tracer for mathematical computations.
+	Like logging, but oriented towards capturing values.
 */
 package tracer
 

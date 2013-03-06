@@ -2,7 +2,6 @@
 	Stochastic Gradient Descent
 
 	https://en.wikipedia.org/wiki/Stochastic_gradient_descent
-
 */
 package sgrad
 
@@ -24,7 +23,7 @@ type State struct {
 	Value  float64
 }
 
-// Termination criterion generates a double error that is compared to passed in epsilon
+// Termination criterion generates a double tolerance that is compared to fixed epsilon
 // (precision)
 type TerminationCriterion interface {
 	ShouldTerminate(s *State) float64
@@ -73,6 +72,7 @@ func Minimize(f ObjectiveFunc, initial vector.V64, epsilon float64, term Termina
 		perm := rand.Perm(f.Terms)
 		maxDist := 0.0
 
+		// todo(mike): there's some theory about choosing alpha.
 		alpha := .1 / (1 + math.Sqrt(float64(pass)))
 		t.TraceFloat64("alpha", alpha)
 
