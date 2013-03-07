@@ -14,6 +14,9 @@ NodeList.prototype.each = function(callback) {
 
 (function() {
     var videoElement = document.querySelector('video');
+    var c1 = document.getElementById("c1");
+    var ctx1 = c1.getContext("2d");
+
     var screenCast = new ScreenCast(videoElement);
 
     screenCast.start();
@@ -22,6 +25,7 @@ NodeList.prototype.each = function(callback) {
     for (var i = 0, numberOfButtons = effectButtons.length; i < numberOfButtons; i++) {
         effectButtons[i].addEventListener('click', function(e) {
             e.preventDefault();
+	    ctx1.drawImage(videoElement, 0, 0, videoElement.videoWidth, videoElement.videoHeight);
 
             var effect = this.getAttribute('data-effect');
 
