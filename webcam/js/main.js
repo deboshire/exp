@@ -27,6 +27,7 @@ NodeList.prototype.each = function(callback) {
     for (var i = 0, numberOfButtons = effectButtons.length; i < numberOfButtons; i++) {
         effectButtons[i].addEventListener('click', function(e) {
             e.preventDefault();
+	    var start = performance.now();
 	    var width = videoElement.videoWidth;
 	    var height = videoElement.videoHeight;
 	    ctx1.drawImage(videoElement, 0, 0, width, height);
@@ -43,6 +44,8 @@ NodeList.prototype.each = function(callback) {
 		}
 	    }
 	    ctx2.putImageData(frame, 0, 0);
+	    var end = performance.now();
+	    document.getElementById('stats').innerHTML = 'Total time: ' + (end - start) + ' ms';
 
             var effect = this.getAttribute('data-effect');
 
