@@ -12,6 +12,18 @@ NodeList.prototype.each = function(callback) {
     }
 };
 
+function drawFaces(ctx, comp, scale) {
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(230,87,0,0.8)';
+    /* draw detected area */
+    for (var i = 0; i < comp.length; i++) {
+	ctx.beginPath();
+	ctx.arc((comp[i].x + comp[i].width * 0.5) * scale, (comp[i].y + comp[i].height * 0.5) * scale,
+		(comp[i].width + comp[i].height) * 0.25 * scale * 1.2, 0, Math.PI * 2);
+	ctx.stroke();
+    }
+}
+
 (function() {
     var videoElement = document.querySelector('video');
     var c1 = document.getElementById("c1");
@@ -31,6 +43,13 @@ NodeList.prototype.each = function(callback) {
 	    var width = videoElement.videoWidth;
 	    var height = videoElement.videoHeight;
 	    ctx1.drawImage(videoElement, 0, 0, width, height);
+	    var comp = ccv.detect_objects({ "canvas" : ccv.grayscale(c1),
+					    "cascade" : cascade,
+					    "interval" : 5,
+					    "min_neighbors" : 1 });
+	    console.log(comp);
+	    drawFaces(ctx1, comp, 1);
+			
 	    var frame = ctx1.getImageData(0, 0, width, height);
 	    var l = frame.data.length / 4;
 	    for (var i = 0; i < l; i++) {
