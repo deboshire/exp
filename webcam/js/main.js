@@ -50,22 +50,6 @@ function drawFaces(ctx, comp, scale) {
 			
 	    var end = performance.now();
 	    document.getElementById('stats').innerHTML = 'Total time: ' + (end - start) + ' ms';
-
-            var effect = this.getAttribute('data-effect');
-
-            if (this.hasClass('active')) {
-                this.classList.remove('active');
-                videoElement.classList.remove(effect);
-            } else {
-                document.querySelectorAll('ul.effects li a').each(function(element) {
-                    element.classList.remove('active');
-                });
-
-                videoElement.setAttribute('class', '');
-
-                this.classList.add('active');
-                videoElement.classList.add(effect);
-            }
         });
     }
 }());

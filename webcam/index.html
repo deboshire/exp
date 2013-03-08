@@ -17,23 +17,17 @@
   </head>
   <body>
     <header>
-      <h1>ScreenCast</h1>
+      <ul class="effects">
+        <li><a href="#" class="button blue">Find Faces</a></li>
+      </ul>
     </header>
     <div id="body">
-      <video autoplay="autoplay"></video>
-      <ul class="effects">
-        <li><a href="#" class="button blue" data-effect="grayscale">Grayscale</a></li>
-        <li><a href="#" class="button blue" data-effect="sepia">Sepia</a></li>
-        <li><a href="#" class="button blue" data-effect="blur">Blur</a></li>
-        <li><a href="#" class="button blue" data-effect="brightness">Brightness</a></li>
-        <li><a href="#" class="button blue" data-effect="contrast">Contrast</a></li>
-        <li><a href="#" class="button blue" data-effect="hue-rotate-90">Hue rotate (90°)</a></li>
-        <li><a href="#" class="button blue" data-effect="hue-rotate-180">Hue rotate (180°)</a></li>
-        <li><a href="#" class="button blue" data-effect="hue-rotate-270">Hue rotate (270°)</a></li>
-        <li><a href="#" class="button blue" data-effect="saturate">Saturate</a></li>
-        <li><a href="#" class="button blue" data-effect="invert">Invert</a></li>
-      </ul>
-      <canvas id="c1" width="640" height="480"></canvas>
+      <div style="float:left;">
+	<video autoplay="autoplay"></video>
+      </div>
+      <div style="float:left;">
+	<canvas id="c1" width="640" height="480"></canvas>
+      </div>
     </div>
     <script src="third_party/ScreenCast/public/js/ScreenCast/ScreenCast.js"></script>
     <script src="third_party/ccv/ccv.js"></script>
