@@ -24,6 +24,12 @@ function drawFaces(ctx, comp, scale) {
     }
 }
 
+function scheduleSearch() {
+    setTimeout(function() {
+	document.getElementById('findFacesButton').click();
+    }, 100);
+}
+
 (function() {
     var videoElement = document.querySelector('video');
     var c1 = document.getElementById("c1");
@@ -50,6 +56,8 @@ function drawFaces(ctx, comp, scale) {
 			
 	    var end = performance.now();
 	    document.getElementById('stats').innerHTML = 'Total time: ' + (end - start) + ' ms';
+	    scheduleSearch();
         });
     }
+
 }());
