@@ -37,6 +37,32 @@ function scheduleSearch() {
 
     var screenCast = new ScreenCast(videoElement);
 
+    var A = $M([
+	[1, 1],
+	[0, 1],
+    ]);
+    var R = $M([
+	[0, 0],
+	[0, 1],
+    ]);
+    var C = $M([
+	[1, 0],
+    ]);
+    var Q = $M([
+	[10],
+    ]);
+    var mu = $M([
+	[3],
+	[4],
+    ]);
+    var sigma = $M([
+	[10, 0],
+	[0, 10],
+    ]);
+    var z = $M([
+	[6.8],
+    ]);
+
     screenCast.start();
 
     var effectButtons = document.querySelectorAll('ul.effects li a');
@@ -53,6 +79,7 @@ function scheduleSearch() {
 					    "min_neighbors" : 1 });
 	    console.log(comp);
 	    drawFaces(ctx1, comp, 1);
+	    Kalman(A, R, C, Q, mu, sigma, z);
 			
 	    var end = performance.now();
 	    document.getElementById('stats').innerHTML = 'Total time: ' + (end - start) + ' ms';

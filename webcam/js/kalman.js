@@ -10,5 +10,16 @@
  * Returns [mu_next, sigma_next] array.
  */
 function Kalman(A, R, C, Q, mu, sigma, z) {
-    
+    console.log("Kalman(A=", A.inspect(), "C=", C.inspect(),
+		"mu=", mu.inspect(), "z=", z.inspect());
+    var mu_pred = A.multiply(mu);
+    console.log("mu_pred: ", mu_pred.inspect());
+    var sigma_pred = A.multiply(sigma.multiply(A.transpose())).add(R);
+    console.log("sigma_pred: ", sigma_pred.inspect());
+    var tmp = (C.multiply(sigma_pred.multiply(C.transpose())).add(Q)).inverse();
+    var K = sigma_pred.multiply(C.transpose().multiply(tmp));
+    console.log("K: ", K.inspect());
+    var mu_next = mu_pred.add(K.multiply(z.subtract(C.multiply(mu_pred))));
+    console.log("mu_next: ", mu_next.inspect());
+    // TODO: add sigma_next
 }
