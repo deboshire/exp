@@ -30,6 +30,8 @@ type TerminationCriterion interface {
 	ShouldTerminate(s *State) float64
 }
 
+// Termination criterion that keeps track of relative mean improvement of the
+// function value
 type RelativeMeanImprovementCriterion struct {
 	NumItersToAvg int
 	prevVals      []float64
@@ -54,6 +56,19 @@ func (c *RelativeMeanImprovementCriterion) ShouldTerminate(s *State) float64 {
 	s.Tracer.TraceFloat64("avgImprovement", avgImprovement)
 	s.Tracer.TraceFloat64("relAvgImpr", relAvgImpr)
 	return relAvgImpr
+}
+
+// Termination criterion that terminates after given number of iterations.
+type NumIterationsCriterion struct {
+	NumIterations int
+}
+
+func (c *NumIterationsCriterion) ShouldTerminate(s *State) float64 {
+	if s.Pass >= c.NumIterations-1 {
+		return 0
+	}
+	return math.MaxFloat64
+
 }
 
 /*
@@ -118,7 +133,7 @@ func LeastSquares(points []vector.V64) ObjectiveFunc {
 	dim := len(points[0])
 
 	f := func(idx int, x vector.V64) (value float64, gradient vector.V64) {
-		// The function itself is: 
+		// The function itself is:
 		// (x[0] + x[1]*points[idx][0] + x[2]*points[idx][1] + .... - points[-1])^2
 		a := x[0]
 		row := points[idx]
@@ -127,8 +142,8 @@ func LeastSquares(points []vector.V64) ObjectiveFunc {
 		}
 		a -= row[dim-1]
 
-		// The gradient is 
-		// 2a for i == 0, 2*points[idx][i-1]*a for other idx 
+		// The gradient is
+		// 2a for i == 0, 2*points[idx][i-1]*a for other idx
 		gradient = vector.Zeroes(len(x))
 		gradient[0] = 2 * a
 		for i := 1; i < dim; i++ {

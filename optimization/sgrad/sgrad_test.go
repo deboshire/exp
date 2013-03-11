@@ -45,6 +45,19 @@ func TestLeastSquares(t *testing.T) {
 	}
 }
 
+func BenchmarkLeastSquare(b *testing.B) {
+	f := LeastSquares([]vector.V64{
+		vector.V64{1, 1},
+		vector.V64{2, 2},
+	})
+
+	term := NumIterationsCriterion{NumIterations: 1}
+
+	for i := 0; i < b.N; i++ {
+		Minimize(f, vector.Zeroes(2), 1e-8, &term, nil)
+	}
+}
+
 func init() {
 	rand.Seed(1)
 }
