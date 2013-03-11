@@ -59,9 +59,7 @@ function scheduleSearch() {
 	[10, 0],
 	[0, 10],
     ]);
-    var z = $M([
-	[6.8],
-    ]);
+    var kalman = new Kalman(A, R, C, Q, mu, sigma);
 
     screenCast.start();
 
@@ -79,7 +77,9 @@ function scheduleSearch() {
 					    "min_neighbors" : 1 });
 	    console.log(comp);
 	    drawFaces(ctx1, comp, 1);
-	    Kalman(A, R, C, Q, mu, sigma, z);
+	    kalman.update($M([
+		[6.7],
+	    ]));
 			
 	    var end = performance.now();
 	    document.getElementById('stats').innerHTML = 'Total time: ' + (end - start) + ' ms';

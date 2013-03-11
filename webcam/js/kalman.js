@@ -4,28 +4,38 @@
  * R - covariance matrix for state-transition noise
  * C - a matrix, so that z_t = C * x_t + delta_t
  * Q - covariance matrix for measurement noise
- * mu - vector of mean values
- * sigma - covariance matrix
- * z - measurements vector
- * Returns [mu_next, sigma_next] array.
+ * mu - vector of mean values on start
+ * sigma - covariance matrix on start
  */
-function Kalman(A, R, C, Q, mu, sigma, z) {
-    console.log("Kalman(A=", A.inspect(), "C=", C.inspect(),
-		"mu=", mu.inspect(), "z=", z.inspect());
-    var mu_pred = A.multiply(mu);
+Kalman = function(A, R, C, Q, mu, sigma) {
+    this.A = A;
+    this.R = R;
+    this.C = C;
+    this.Q = Q;
+    this.mu = mu;
+    this.sigma = sigma;
+};
+
+/*
+ * Updates mu and sigma by looking at the current measurements vector z.
+ */
+Kalman.prototype.update = function(z) {
+    console.log("Kalman.update(A=", this.A.inspect(), "C=", this.C.inspect(),
+		"mu=", this.mu.inspect(), "z=", z.inspect());
+    var mu_pred = this.A.multiply(this.mu);
     console.log("mu_pred: ", mu_pred.inspect());
-    var sigma_pred = A.multiply(sigma.multiply(A.transpose())).add(R);
+    var sigma_pred = this.A.multiply(this.sigma.multiply(this.A.transpose())).add(this.R);
     console.log("sigma_pred: ", sigma_pred.inspect());
-    var tmp = (C.multiply(sigma_pred.multiply(C.transpose())).add(Q)).inverse();
-    var K = sigma_pred.multiply(C.transpose().multiply(tmp));
-    console.log("K: ", K.inspect());
-    var mu_next = mu_pred.add(K.multiply(z.subtract(C.multiply(mu_pred))));
+    var tmp = (this.C.multiply(sigma_pred.multiply(this.C.transpose())).add(this.Q)).inverse();
+    var K = sigma_pred.multiply(this.C.transpose().multiply(tmp));
+    var mu_next = mu_pred.add(K.multiply(z.subtract(this.C.multiply(mu_pred))));
     console.log("mu_next: ", mu_next.inspect());
 
     // sigma_next = (I - K*C) * sigma_pred
-    var tmp2 = K.multiply(C);
+    var tmp2 = K.multiply(this.C);
     var I = Sylvester.Matrix.I(tmp2.rows());
     var sigma_next = I.subtract(tmp2).multiply(sigma_pred)
     console.log("sigma_next: ", sigma_next.inspect());
-    return [mu_next, sigma_next];
+    this.mu = mu_next;
+    this.sigma = sigma_next;
 }
