@@ -21,5 +21,11 @@ function Kalman(A, R, C, Q, mu, sigma, z) {
     console.log("K: ", K.inspect());
     var mu_next = mu_pred.add(K.multiply(z.subtract(C.multiply(mu_pred))));
     console.log("mu_next: ", mu_next.inspect());
-    // TODO: add sigma_next
+
+    // sigma_next = (I - K*C) * sigma_pred
+    var tmp2 = K.multiply(C);
+    var I = Sylvester.Matrix.I(tmp2.rows());
+    var sigma_next = I.subtract(tmp2).multiply(sigma_pred)
+    console.log("sigma_next: ", sigma_next.inspect());
+    return [mu_next, sigma_next];
 }
