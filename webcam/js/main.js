@@ -32,8 +32,8 @@ function scheduleSearch() {
 
 var FaceModel = function() {
     this.mu = $M([
-	[0],
-	[0],
+	[320],
+	[240],
 	[0],
 	[0],
 	[320],
@@ -64,12 +64,12 @@ FaceModel.prototype.update = function(ctx, comp) {
 	[0, 0, 0, 0, 0, 1]
     ]);
     var R = $M([
-	[400,   0,   0,   0,   0,   0],
-	[  0, 400,   0,   0,   0,   0],
+	[200,   0,   0,   0,   0,   0],
+	[  0, 200,   0,   0,   0,   0],
 	[  0,   0, 200,   0,   0,   0],
 	[  0,   0,   0, 200,   0,   0],
-	[  0,   0,   0,   0, 400,   0],
-	[  0,   0,   0,   0,   0, 400]
+	[  0,   0,   0,   0, 200,   0],
+	[  0,   0,   0,   0,   0, 200]
     ]);
     var C = $M([
 	[1, 0, 0, 0, 0, 0],
@@ -82,8 +82,8 @@ FaceModel.prototype.update = function(ctx, comp) {
     var z;
     if (comp.length == 0) {
 	z = $M([
-	    [0],
-	    [0],
+	    [320],
+	    [240],
 	    [320],
 	    [240]
 	    ]);
@@ -95,16 +95,17 @@ FaceModel.prototype.update = function(ctx, comp) {
 	]);
     } else {
 	z = $M([
-	    [comp[0].x],
-	    [comp[0].y],
+	    [comp[0].x+comp[0].width/2],
+	    [comp[0].y+comp[0].height/2],
 	    [comp[0].width],
 	    [comp[0].height]
 	]);
+	console.log("x: ", comp[0].x, "y: ", comp[0].y, "w: ", comp[0].width, "h: ", comp[0].height);
 	Q = $M([
-	    [90, 0, 0, 0],
-	    [ 0,90, 0, 0],
-	    [ 0, 0,90, 0],
-	    [ 0, 0, 0,90]
+	    [900, 0, 0, 0],
+	    [ 0,900, 0, 0],
+	    [ 0, 0,900, 0],
+	    [ 0, 0, 0,900]
 	]);
     }
     var kalman = new Kalman(A, R, C, Q, this.mu, this.sigma);
@@ -118,11 +119,10 @@ FaceModel.prototype.update = function(ctx, comp) {
     ctx.beginPath();
     var kx = this.mu.e(1, 1);
     var ky = this.mu.e(2, 1);
-    var kw = this.mu.e(4, 1);
-    var kh = this.mu.e(5, 1);
+    var kw = this.mu.e(5, 1);
+    var kh = this.mu.e(6, 1);
     console.log("kx: ", kx, "ky: ", ky, "kw: ", kw, "kh: ", kh);
-    ctx.arc((kx + kw * 0.5), (ky + kh * 0.5),
-	    (kw + kh) * 0.25 * 1.2, 0, Math.PI * 2);
+    ctx.arc(kx, ky, (kw + kh) * 0.25 * 1.2, 0, Math.PI * 2);
     ctx.stroke();
 
 };
