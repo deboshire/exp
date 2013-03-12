@@ -30,6 +30,103 @@ function scheduleSearch() {
     }, 100);
 }
 
+var FaceModel = function() {
+    this.mu = $M([
+	[0],
+	[0],
+	[0],
+	[0],
+	[320],
+	[240]
+    ]);
+    this.sigma = $M([
+	[1600, 0, 0, 0, 0, 0],
+	[0, 1600, 0, 0, 0, 0],
+	[0, 0, 1600, 0, 0, 0],
+	[0, 0, 0, 1600, 0, 0],
+	[0, 0, 0, 0, 1600, 0],
+	[0, 0, 0, 0, 0, 1600],
+    ]);
+    this.lastUpdated = performance.now();
+};
+
+FaceModel.prototype.update = function(ctx, comp) {
+    var now = performance.now();
+    var dt = (now - this.lastUpdated)/1000;
+    this.lastUpdated = now;
+
+    var A = $M([
+	[1, 0, dt, 0, 0, 0],
+	[0, 1, 0, dt, 0, 0],
+	[0, 0, 1, 0, 0, 0],
+	[0, 0, 0, 1, 0, 0],
+	[0, 0, 0, 0, 1, 0],
+	[0, 0, 0, 0, 0, 1]
+    ]);
+    var R = $M([
+	[400,   0,   0,   0,   0,   0],
+	[  0, 400,   0,   0,   0,   0],
+	[  0,   0, 200,   0,   0,   0],
+	[  0,   0,   0, 200,   0,   0],
+	[  0,   0,   0,   0, 400,   0],
+	[  0,   0,   0,   0,   0, 400]
+    ]);
+    var C = $M([
+	[1, 0, 0, 0, 0, 0],
+	[0, 1, 0, 0, 0, 0],
+	[0, 0, 0, 0, 1, 0],
+	[0, 0, 0, 0, 0, 1]
+    ]);
+
+    var Q;
+    var z;
+    if (comp.length == 0) {
+	z = $M([
+	    [0],
+	    [0],
+	    [320],
+	    [240]
+	    ]);
+	Q = $M([
+	    [1600, 0, 0, 0],
+	    [0, 1600, 0, 0],
+	    [0, 0, 1600, 0],
+	    [0, 0, 0, 1600]
+	]);
+    } else {
+	z = $M([
+	    [comp[0].x],
+	    [comp[0].y],
+	    [comp[0].width],
+	    [comp[0].height]
+	]);
+	Q = $M([
+	    [90, 0, 0, 0],
+	    [ 0,90, 0, 0],
+	    [ 0, 0,90, 0],
+	    [ 0, 0, 0,90]
+	]);
+    }
+    var kalman = new Kalman(A, R, C, Q, this.mu, this.sigma);
+    kalman.update(z);
+    this.mu = kalman.mu;
+    this.sigma = kalman.sigma;
+    console.log("new mu: ", this.mu.inspect(), "new sigma: ", this.sigma.inspect());
+
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(87,0,230, 0.8)';
+    ctx.beginPath();
+    var kx = this.mu.e(1, 1);
+    var ky = this.mu.e(2, 1);
+    var kw = this.mu.e(4, 1);
+    var kh = this.mu.e(5, 1);
+    console.log("kx: ", kx, "ky: ", ky, "kw: ", kw, "kh: ", kh);
+    ctx.arc((kx + kw * 0.5), (ky + kh * 0.5),
+	    (kw + kh) * 0.25 * 1.2, 0, Math.PI * 2);
+    ctx.stroke();
+
+};
+
 (function() {
     var videoElement = document.querySelector('video');
     var c1 = document.getElementById("c1");
@@ -37,29 +134,7 @@ function scheduleSearch() {
 
     var screenCast = new ScreenCast(videoElement);
 
-    var A = $M([
-	[1, 1],
-	[0, 1],
-    ]);
-    var R = $M([
-	[0, 0],
-	[0, 1],
-    ]);
-    var C = $M([
-	[1, 0],
-    ]);
-    var Q = $M([
-	[10],
-    ]);
-    var mu = $M([
-	[3],
-	[4],
-    ]);
-    var sigma = $M([
-	[10, 0],
-	[0, 10],
-    ]);
-    var kalman = new Kalman(A, R, C, Q, mu, sigma);
+    var faceModel = new FaceModel();
 
     screenCast.start();
 
@@ -77,9 +152,7 @@ function scheduleSearch() {
 					    "min_neighbors" : 1 });
 	    console.log(comp);
 	    drawFaces(ctx1, comp, 1);
-	    kalman.update($M([
-		[6.7],
-	    ]));
+	    faceModel.update(ctx1, comp);
 			
 	    var end = performance.now();
 	    document.getElementById('stats').innerHTML = 'Total time: ' + (end - start) + ' ms';
