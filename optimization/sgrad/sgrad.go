@@ -23,8 +23,8 @@ type State struct {
 	Value  float64
 }
 
-// Termination criterion generates a double error. The error is compared to epsilon
-// passed to Minimize function and as soon as it is less than epsilon, optimization
+// Termination criterion generates a double error. The error is compared to eps
+// passed to Minimize function and as soon as it is less than eps, optimization
 // process is terminated.
 // todo(mike): this type name is possibly too long.
 type TerminationCriterion interface {

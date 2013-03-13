@@ -82,13 +82,13 @@ func (v F64) F64ToB() B {
 	return B(result)
 }
 
-func (v F64) Eq(v1 F64, epsilon float64) bool {
+func (v F64) Eq(v1 F64, eps float64) bool {
 	if len(v) != len(v1) {
 		return false
 	}
 
 	for i := range v {
-		if math.Abs(v[i]-v1[i]) > epsilon {
+		if math.Abs(v[i]-v1[i]) > eps {
 			return false
 		}
 	}

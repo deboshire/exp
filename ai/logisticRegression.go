@@ -15,11 +15,11 @@ func TrainLogisticRegressionClassifier(
 	features []v.F64,
 	labels v.B,
 	terminationCriterion sgrad.TerminationCriterion,
-	epsilon float64) BinaryClassifier {
+	eps float64) BinaryClassifier {
 	y, x := sgrad.Minimize(
 		logisticRegressionCostFunction(features, labels),
 		v.Zeroes(len(features[0])),
-		epsilon,
+		eps,
 		terminationCriterion,
 		nil)
 
