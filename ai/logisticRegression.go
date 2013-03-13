@@ -32,12 +32,12 @@ func sigmoid(x float64) float64 {
 
 // http://mathurl.com/bmfs3db
 func logisticRegressionCostFunction(features []v.F64, labels v.B) sgrad.ObjectiveFunc {
-	f := func(idx int, x v.F64) (value float64, gradient v.F64) {
+	f := func(idx int, x v.F64, gradient v.F64) (value float64) {
 		feature := features[idx]
 		label := labels[idx]
 
 		h := sigmoid(x.DotProduct(feature))
-		gradient = feature.Copy()
+		feature.CopyTo(gradient)
 
 		if label {
 			value = -math.Log(h)

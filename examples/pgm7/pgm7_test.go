@@ -44,3 +44,6 @@ func ExamplePGM7_LogisticRegression() {
 	// train set:  1
 	// benchmark set:  0.52
 }
+
+func init() {
+}

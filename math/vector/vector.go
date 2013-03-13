@@ -19,6 +19,10 @@ func (v F64) Copy() F64 {
 	return result
 }
 
+func (v F64) CopyTo(target F64) {
+	copy(target, v)
+}
+
 func Zeroes(size int) F64 {
 	return F64(make([]float64, size))
 }

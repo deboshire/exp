@@ -14,7 +14,7 @@ import (
 
 type ObjectiveFunc struct {
 	Terms int
-	F     func(idx int, x vector.F64) (value float64, gradient vector.F64)
+	F     func(idx int, x vector.F64, out_gradient vector.F64) float64
 }
 
 type State struct {
@@ -86,6 +86,7 @@ func Minimize(f ObjectiveFunc, initial vector.F64, epsilon float64, term Termina
 
 	s := State{Pass: 0, Tracer: t}
 	x := initial.Copy()
+	grad := initial.Copy()
 
 	for pass := 0; ; pass++ {
 		s.Pass = pass
@@ -102,7 +103,7 @@ func Minimize(f ObjectiveFunc, initial vector.F64, epsilon float64, term Termina
 
 			t.TraceF64("x", x)
 
-			y, grad := f.F(idx, x)
+			y:= f.F(idx, x, grad)
 			t.TraceF64("grad", grad)
 			t.TraceFloat64("y", y)
 
@@ -113,7 +114,9 @@ func Minimize(f ObjectiveFunc, initial vector.F64, epsilon float64, term Termina
 			if dist > maxDist {
 				maxDist = dist
 			}
+			temp := x
 			x = grad
+			grad = temp
 			value = y
 		}
 
@@ -136,7 +139,7 @@ func Minimize(f ObjectiveFunc, initial vector.F64, epsilon float64, term Termina
 func LeastSquares(points []vector.F64) ObjectiveFunc {
 	dim := len(points[0])
 
-	f := func(idx int, x vector.F64) (value float64, gradient vector.F64) {
+	f := func(idx int, x vector.F64, gradient vector.F64) (value float64) {
 		// The function itself is:
 		// (x[0] + x[1]*points[idx][0] + x[2]*points[idx][1] + .... - points[-1])^2
 		a := x[0]
@@ -148,7 +151,6 @@ func LeastSquares(points []vector.F64) ObjectiveFunc {
 
 		// The gradient is
 		// 2a for i == 0, 2*points[idx][i-1]*a for other idx
-		gradient = vector.Zeroes(len(x))
 		gradient[0] = 2 * a
 		for i := 1; i < dim; i++ {
 			gradient[i] = 2 * row[i-1] * a
