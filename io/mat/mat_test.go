@@ -2,6 +2,7 @@ package mat
 
 import (
 	"bufio"
+	v "github.com/deboshire/exp/math/vector"
 	"os"
 	"reflect"
 	"testing"
@@ -40,5 +41,28 @@ func TestFail(t *testing.T) {
 
 	if len(arr.Data) != 200*129 {
 		t.Fatalf("Bad data size: %s", len(arr.Data))
+	}
+
+	vectors := arr.RowsToVectors()
+	if len(vectors) != 200 {
+		t.Fatalf("vectors size mismatch: %d", len(vectors))
+	}
+
+	vector := vectors[0]
+	if len(vector) != 129 {
+		t.Fatalf("vector len mismatch: %d", len(vector))
+	}
+
+	if !vectors[0].Eq(
+		v.F64{
+			// cross checked with octave
+			1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		1e-10) {
+		t.Fatalf("vector mismatch: %#v", vectors[0])
 	}
 }

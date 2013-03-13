@@ -22,7 +22,10 @@ func (a *Array) RowsToVectors() (vectors []vector.F64) {
 	data := a.Data
 
 	for i := 0; i < rows; i++ {
-		row := data[(i * rowLen):((i + 1) * rowLen)]
+		row := make([]float64, rowLen)
+		for j := 0; j < rowLen; j++ {
+			row[j] = data[i + j * rows]
+		}
 		vectors = append(vectors, row)
 	}
 
