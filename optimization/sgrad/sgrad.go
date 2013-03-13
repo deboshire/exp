@@ -14,7 +14,7 @@ import (
 
 type ObjectiveFunc struct {
 	Terms int
-	F     func(idx int, x vector.V64) (value float64, gradient vector.V64)
+	F     func(idx int, x vector.F64, out_gradient vector.F64) float64
 }
 
 type State struct {
@@ -23,50 +23,71 @@ type State struct {
 	Value  float64
 }
 
-// Termination criterion generates a double error. The error is compared to epsilon
-// passed to Minimize function and as soon as it is less than epsilon, optimization
+// Termination criterion generates a double error. The error is compared to eps
+// passed to Minimize function and as soon as it is less than eps, optimization
 // process is terminated.
+// todo(mike): this type name is possibly too long.
 type TerminationCriterion interface {
 	ShouldTerminate(s *State) float64
 }
 
+// Termination criterion that keeps track of relative mean improvement of the
+// function value
 type RelativeMeanImprovementCriterion struct {
 	NumItersToAvg int
 	prevVals      []float64
 }
 
 func (c *RelativeMeanImprovementCriterion) ShouldTerminate(s *State) float64 {
+	iters := c.NumItersToAvg
+	if iters < 2 {
+		iters = 5
+	}
 	c.prevVals = append(c.prevVals, s.Value)
 
-	if len(c.prevVals) < c.NumItersToAvg {
+	if len(c.prevVals) < iters {
 		// not enough values yet.
 		return math.MaxFloat64
 	}
 
-	if len(c.prevVals) > c.NumItersToAvg {
+	if len(c.prevVals) > iters {
 		c.prevVals = c.prevVals[1:]
 	}
 
 	prevVal := c.prevVals[0]
 	val := s.Value
-	avgImprovement := (prevVal - val) / float64(c.NumItersToAvg)
+	avgImprovement := (prevVal - val) / float64(iters)
 	relAvgImpr := math.Abs(avgImprovement / val)
 	s.Tracer.TraceFloat64("avgImprovement", avgImprovement)
 	s.Tracer.TraceFloat64("relAvgImpr", relAvgImpr)
 	return relAvgImpr
 }
 
+// Termination criterion that terminates after given number of iterations.
+type NumIterationsCriterion struct {
+	NumIterations int
+}
+
+func (c *NumIterationsCriterion) ShouldTerminate(s *State) float64 {
+	if s.Pass >= c.NumIterations-1 {
+		return 0
+	}
+	return math.MaxFloat64
+
+}
+
 /*
 	Minimize a function of the form:
 		Sum_i{F_i(x)}, i := 0...terms
 */
-func Minimize(f ObjectiveFunc, initial vector.V64, epsilon float64, term TerminationCriterion, t tracer.Tracer) (value float64, coords vector.V64) {
+func Minimize(f ObjectiveFunc, initial vector.F64, eps float64, term TerminationCriterion, t tracer.Tracer) (value float64, coords vector.F64) {
 	if t == nil {
 		t = tracer.DefaultTracer()
 	}
 
 	s := State{Pass: 0, Tracer: t}
 	x := initial.Copy()
+	grad := initial.Copy()
 
 	for pass := 0; ; pass++ {
 		s.Pass = pass
@@ -81,10 +102,10 @@ func Minimize(f ObjectiveFunc, initial vector.V64, epsilon float64, term Termina
 		for _, idx := range perm {
 			t.TraceInt("idx", idx)
 
-			t.TraceV64("x", x)
+			t.TraceF64("x", x)
 
-			y, grad := f.F(idx, x)
-			t.TraceV64("grad", grad)
+			y:= f.F(idx, x, grad)
+			t.TraceF64("grad", grad)
 			t.TraceFloat64("y", y)
 
 			grad.Mul(-alpha)
@@ -94,7 +115,9 @@ func Minimize(f ObjectiveFunc, initial vector.V64, epsilon float64, term Termina
 			if dist > maxDist {
 				maxDist = dist
 			}
+			temp := x
 			x = grad
+			grad = temp
 			value = y
 		}
 
@@ -103,7 +126,7 @@ func Minimize(f ObjectiveFunc, initial vector.V64, epsilon float64, term Termina
 		s.Value = value
 		err := term.ShouldTerminate(&s)
 		t.TraceFloat64("err", err)
-		if err < epsilon {
+		if err < eps {
 			break
 		}
 	}
@@ -114,11 +137,11 @@ func Minimize(f ObjectiveFunc, initial vector.V64, epsilon float64, term Termina
 /*
 	Objective function for performing least squares optimization.
 */
-func LeastSquares(points []vector.V64) ObjectiveFunc {
+func LeastSquares(points []vector.F64) ObjectiveFunc {
 	dim := len(points[0])
 
-	f := func(idx int, x vector.V64) (value float64, gradient vector.V64) {
-		// The function itself is: 
+	f := func(idx int, x vector.F64, gradient vector.F64) (value float64) {
+		// The function itself is:
 		// (x[0] + x[1]*points[idx][0] + x[2]*points[idx][1] + .... - points[-1])^2
 		a := x[0]
 		row := points[idx]
@@ -127,9 +150,8 @@ func LeastSquares(points []vector.V64) ObjectiveFunc {
 		}
 		a -= row[dim-1]
 
-		// The gradient is 
-		// 2a for i == 0, 2*points[idx][i-1]*a for other idx 
-		gradient = vector.Zeroes(len(x))
+		// The gradient is
+		// 2a for i == 0, 2*points[idx][i-1]*a for other idx
 		gradient[0] = 2 * a
 		for i := 1; i < dim; i++ {
 			gradient[i] = 2 * row[i-1] * a
