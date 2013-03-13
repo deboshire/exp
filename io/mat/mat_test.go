@@ -11,11 +11,11 @@ func TestFail(t *testing.T) {
 	var file *os.File
 	var err error
 
-	if file, err = os.Open(os.ExpandEnv("Train1X.mat")); err != nil {
+	if file, err = os.Open("Train1X.mat"); err != nil {
 		t.Fatal(err)
 	}
 
-	d, err := Read(bufio.NewReader(file))
+	d, err := read0(bufio.NewReader(file))
 
 	if err != nil {
 		t.Fatal(err)

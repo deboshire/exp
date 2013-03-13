@@ -5,12 +5,14 @@
 package mat
 
 import (
+	"bufio"
 	"bytes"
 	"compress/zlib"
 	"encoding/binary"
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"reflect"
 )
 
@@ -60,10 +62,13 @@ const (
 	mxUINT64_CLASS = 15
 )
 
-type Array struct {
-	Name string
-	Dim  []int32
-	Data []float64
+type MatFile interface {
+	// Returns an array with a given name. Return nil if not found
+	GetArray(name string) *Array
+}
+
+type matFileImpl struct {
+	data []interface{}
 }
 
 func pad(reader io.Reader, size uint32) error {
@@ -217,7 +222,7 @@ func readDataElement(reader io.Reader, encoding binary.ByteOrder) (result interf
 	panic("unreachable")
 }
 
-func Read(reader io.Reader) (result []interface{}, err error) {
+func read0(reader io.Reader) (result []interface{}, err error) {
 	var h header
 	var encoding binary.ByteOrder = binary.LittleEndian
 	if err = binary.Read(reader, encoding, &h); err != nil {
@@ -233,4 +238,40 @@ func Read(reader io.Reader) (result []interface{}, err error) {
 	}
 
 	return readAllElements(reader, encoding)
+}
+
+func Read(reader io.Reader) (file MatFile, err error) {
+	data, err := read0(reader)
+	if err != nil {
+		return nil, err
+	}
+	return &matFileImpl{data: data}, nil
+}
+
+func (f *matFileImpl) GetArray(name string) *Array {
+	for _, x := range f.data {
+		a, ok := x.(Array)
+		if ok && a.Name == name {
+			return &a
+		}
+	}
+
+	return nil
+}
+
+func ReadFileOrPanic(fileName string) MatFile {
+	var file *os.File
+	var err error
+
+	if file, err = os.Open(fileName); err != nil {
+		panic(err)
+	}
+
+	result, err := Read(bufio.NewReader(file))
+
+	if err != nil {
+		panic(err)
+	}
+
+	return result
 }
