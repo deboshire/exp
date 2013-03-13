@@ -21,14 +21,39 @@ func ExamplePGM7_LogisticRegression() {
 		classifier := ai.TrainLogisticRegressionClassifier(
 			trainFeatures,
 			trainLabels,
+			0,
 			&sgrad.NumIterationsCriterion{NumIterations: iterations},
 			1e-8)
 		fmt.Println("train set: ", ai.EvaluateBinaryClassifier(classifier, trainFeatures, trainLabels))
 		fmt.Println("benchmark set: ", ai.EvaluateBinaryClassifier(classifier, benchmarkFeatures, benchmarkLabels))
 	}
 
+	for _, epsilon := range []float64{1e-1, 1e-2, 1e-3} {
+		fmt.Println("---\nepsilon: ", epsilon)
+		classifier := ai.TrainLogisticRegressionClassifier(
+			trainFeatures,
+			trainLabels,
+			0,
+			&sgrad.RelativeMeanImprovementCriterion{},
+			epsilon)
+		fmt.Println("train set: ", ai.EvaluateBinaryClassifier(classifier, trainFeatures, trainLabels))
+		fmt.Println("benchmark set: ", ai.EvaluateBinaryClassifier(classifier, benchmarkFeatures, benchmarkLabels))
+	}
+
+	for _, alpha := range []float64{0, 0.1, 0.2, 0.4, 0.8, 1} {
+		fmt.Println("---\nalpha: ", alpha)
+		classifier := ai.TrainLogisticRegressionClassifier(
+			trainFeatures,
+			trainLabels,
+			alpha,
+			&sgrad.RelativeMeanImprovementCriterion{},
+			1e-2)
+		fmt.Println("train set: ", ai.EvaluateBinaryClassifier(classifier, trainFeatures, trainLabels))
+		fmt.Println("benchmark set: ", ai.EvaluateBinaryClassifier(classifier, benchmarkFeatures, benchmarkLabels))
+	}
+
 	// Output:
-	// 	---
+	// ---
 	// iterations:  1
 	// train set:  0.925
 	// benchmark set:  0.915
@@ -44,7 +69,42 @@ func ExamplePGM7_LogisticRegression() {
 	// iterations:  1000
 	// train set:  1
 	// benchmark set:  0.92
-
+	// ---
+	// epsilon:  0.1
+	// train set:  0.985
+	// benchmark set:  0.925
+	// ---
+	// epsilon:  0.01
+	// train set:  1
+	// benchmark set:  0.925
+	// ---
+	// epsilon:  0.001
+	// train set:  1
+	// benchmark set:  0.93
+	// ---
+	// alpha:  0
+	// train set:  1
+	// benchmark set:  0.94
+	// ---
+	// alpha:  0.1
+	// train set:  0.945
+	// benchmark set:  0.93
+	// ---
+	// alpha:  0.2
+	// train set:  0.94
+	// benchmark set:  0.905
+	// ---
+	// alpha:  0.4
+	// train set:  0.87
+	// benchmark set:  0.855
+	// ---
+	// alpha:  0.8
+	// train set:  0.91
+	// benchmark set:  0.885
+	// ---
+	// alpha:  1
+	// train set:  0.88
+	// benchmark set:  0.87
 }
 
 func init() {

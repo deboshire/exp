@@ -14,10 +14,11 @@ type logisticRegressionClassifier struct {
 func TrainLogisticRegressionClassifier(
 	features []v.F64,
 	labels v.B,
+	lambda float64,
 	terminationCriterion sgrad.TerminationCriterion,
 	epsilon float64) BinaryClassifier {
 	y, x := sgrad.Minimize(
-		logisticRegressionCostFunction(features, labels),
+		logisticRegressionCostFunction(features, labels, lambda),
 		v.Zeroes(len(features[0])),
 		epsilon,
 		terminationCriterion,
@@ -31,7 +32,7 @@ func sigmoid(x float64) float64 {
 }
 
 // http://mathurl.com/bmfs3db
-func logisticRegressionCostFunction(features []v.F64, labels v.B) sgrad.ObjectiveFunc {
+func logisticRegressionCostFunction(features []v.F64, labels v.B, lambda float64) sgrad.ObjectiveFunc {
 	f := func(idx int, x v.F64, gradient v.F64) (value float64) {
 		feature := features[idx]
 		label := labels[idx]
@@ -45,6 +46,14 @@ func logisticRegressionCostFunction(features []v.F64, labels v.B) sgrad.Objectiv
 		} else {
 			value = -math.Log(1.0 - h)
 			gradient.Mul(h)
+		}
+
+		if lambda != 0.0 {
+			// apply regularizaiton.
+			for i := 1; i < len(x); i++ {
+				value += 0.5 * lambda * x[i] * x[i]
+				gradient[i] += lambda * x[i]
+			}
 		}
 
 		return
