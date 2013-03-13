@@ -8,9 +8,9 @@ import (
 )
 
 func TestLeastSquaresPrecise(t *testing.T) {
-	f := LeastSquares([]vector.V64{
-		vector.V64{1, 1},
-		vector.V64{2, 2},
+	f := LeastSquares([]vector.F64{
+		vector.F64{1, 1},
+		vector.F64{2, 2},
 	})
 
 	term := RelativeMeanImprovementCriterion{NumItersToAvg: 10}
@@ -27,11 +27,11 @@ func TestLeastSquaresPrecise(t *testing.T) {
 
 func TestLeastSquares(t *testing.T) {
 	// Demo problem from https://en.wikipedia.org/wiki/Linear_least_squares_(mathematics)
-	f := LeastSquares([]vector.V64{
-		vector.V64{1, 6},
-		vector.V64{2, 5},
-		vector.V64{3, 7},
-		vector.V64{4, 10},
+	f := LeastSquares([]vector.F64{
+		vector.F64{1, 6},
+		vector.F64{2, 5},
+		vector.F64{3, 7},
+		vector.F64{4, 10},
 	})
 
 	term := RelativeMeanImprovementCriterion{NumItersToAvg: 10}
@@ -42,6 +42,19 @@ func TestLeastSquares(t *testing.T) {
 	}
 	if math.Abs(coords[1]-1.4) > 1e-1 {
 		t.Error("coords[1] != 1.4: %s", coords[0])
+	}
+}
+
+func BenchmarkLeastSquare(b *testing.B) {
+	f := LeastSquares([]vector.F64{
+		vector.F64{1, 1},
+		vector.F64{2, 2},
+	})
+
+	term := NumIterationsCriterion{NumIterations: 1}
+
+	for i := 0; i < b.N; i++ {
+		Minimize(f, vector.Zeroes(2), 1e-8, &term, nil)
 	}
 }
 
