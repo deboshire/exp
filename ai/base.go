@@ -13,6 +13,10 @@ type BinaryClassifier interface {
 // Evaluate binary classifier on a given data.
 // Returns percentage of correct hits.
 func EvaluateBinaryClassifier(c BinaryClassifier, features []v.F64, labels v.B) float64 {
+	if len(features) == 0 {
+		return 0.0
+	}
+
 	successes := 0
 
 	for i := range features {

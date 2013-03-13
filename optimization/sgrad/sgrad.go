@@ -26,6 +26,7 @@ type State struct {
 // Termination criterion generates a double error. The error is compared to epsilon
 // passed to Minimize function and as soon as it is less than epsilon, optimization
 // process is terminated.
+// todo(mike): this type name is possibly too long.
 type TerminationCriterion interface {
 	ShouldTerminate(s *State) float64
 }
@@ -39,7 +40,7 @@ type RelativeMeanImprovementCriterion struct {
 
 func (c *RelativeMeanImprovementCriterion) ShouldTerminate(s *State) float64 {
 	iters := c.NumItersToAvg
-	if iters == 0 {
+	if iters < 2 {
 		iters = 5
 	}
 	c.prevVals = append(c.prevVals, s.Value)
@@ -79,7 +80,7 @@ func (c *NumIterationsCriterion) ShouldTerminate(s *State) float64 {
 	Minimize a function of the form:
 		Sum_i{F_i(x)}, i := 0...terms
 */
-func Minimize(f ObjectiveFunc, initial vector.F64, epsilon float64, term TerminationCriterion, t tracer.Tracer) (value float64, coords vector.F64) {
+func Minimize(f ObjectiveFunc, initial vector.F64, eps float64, term TerminationCriterion, t tracer.Tracer) (value float64, coords vector.F64) {
 	if t == nil {
 		t = tracer.DefaultTracer()
 	}
@@ -125,7 +126,7 @@ func Minimize(f ObjectiveFunc, initial vector.F64, epsilon float64, term Termina
 		s.Value = value
 		err := term.ShouldTerminate(&s)
 		t.TraceFloat64("err", err)
-		if err < epsilon {
+		if err < eps {
 			break
 		}
 	}

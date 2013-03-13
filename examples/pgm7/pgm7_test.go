@@ -10,11 +10,11 @@ import (
 func benchmark(iterations int)
 
 func ExamplePGM7_LogisticRegression() {
-	trainFeatures := mat.ReadFileOrPanic("Train1X.mat").GetArray("Train1X").RowsToVectors()
-	trainLabels := mat.ReadFileOrPanic("Train1Y.mat").GetArray("Train1Y").ToVector().F64ToB()
+	trainFeatures := mat.MustRead("Train1X.mat").Array("Train1X").RowsToVectors()
+	trainLabels := mat.MustRead("Train1Y.mat").Array("Train1Y").ToVector().F64ToB()
 
-	benchmarkFeatures := mat.ReadFileOrPanic("Validation1X.mat").GetArray("Validation1X").RowsToVectors()
-	benchmarkLabels := mat.ReadFileOrPanic("Validation1Y.mat").GetArray("Validation1Y").ToVector().F64ToB()
+	benchmarkFeatures := mat.MustRead("Validation1X.mat").Array("Validation1X").RowsToVectors()
+	benchmarkLabels := mat.MustRead("Validation1Y.mat").Array("Validation1Y").ToVector().F64ToB()
 
 	for _, iterations := range []int{1, 10, 100, 1000} {
 		fmt.Println("---\niterations: ", iterations)

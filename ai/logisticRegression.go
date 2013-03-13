@@ -53,7 +53,7 @@ func logisticRegressionCostFunction(features []v.F64, labels v.B) sgrad.Objectiv
 	return sgrad.ObjectiveFunc{Terms: len(features), F: f}
 }
 
-func (c *logisticRegressionClassifier) Classify(features v.F64) (result bool, confidence float64) {
+func (c *logisticRegressionClassifier) Classify(features v.F64) (res bool, confidence float64) {
 	h := sigmoid(c.theta.DotProduct(features))
 	return h >= 0.5, math.Abs(0.5-h) * 2.0
 }

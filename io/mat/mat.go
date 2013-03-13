@@ -64,7 +64,7 @@ const (
 
 type MatFile interface {
 	// Returns an array with a given name. Return nil if not found
-	GetArray(name string) *Array
+	Array(name string) *Array
 }
 
 type matFileImpl struct {
@@ -222,7 +222,7 @@ func readDataElement(reader io.Reader, encoding binary.ByteOrder) (result interf
 	panic("unreachable")
 }
 
-func read0(reader io.Reader) (result []interface{}, err error) {
+func read(reader io.Reader) (result []interface{}, err error) {
 	var h header
 	var encoding binary.ByteOrder = binary.LittleEndian
 	if err = binary.Read(reader, encoding, &h); err != nil {
@@ -241,14 +241,14 @@ func read0(reader io.Reader) (result []interface{}, err error) {
 }
 
 func Read(reader io.Reader) (file MatFile, err error) {
-	data, err := read0(reader)
+	data, err := read(reader)
 	if err != nil {
 		return nil, err
 	}
 	return &matFileImpl{data: data}, nil
 }
 
-func (f *matFileImpl) GetArray(name string) *Array {
+func (f *matFileImpl) Array(name string) *Array {
 	for _, x := range f.data {
 		a, ok := x.(Array)
 		if ok && a.Name == name {
@@ -259,7 +259,7 @@ func (f *matFileImpl) GetArray(name string) *Array {
 	return nil
 }
 
-func ReadFileOrPanic(fileName string) MatFile {
+func MustRead(fileName string) MatFile {
 	var file *os.File
 	var err error
 

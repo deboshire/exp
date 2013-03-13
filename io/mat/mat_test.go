@@ -16,7 +16,7 @@ func TestFail(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	d, err := read0(bufio.NewReader(file))
+	d, err := read(bufio.NewReader(file))
 
 	if err != nil {
 		t.Fatal(err)

@@ -14,7 +14,7 @@ type Array struct {
 
 func (a *Array) RowsToVectors() (vectors []vector.F64) {
 	if len(a.Dim) != 2 {
-		panic(fmt.Sprintf("Array is not 2-dimensional: %s", a.Dim))
+		panic(fmt.Sprintf("Array is not 2-dimensional: %v", a.Dim))
 	}
 
 	rows := int(a.Dim[0])
@@ -29,16 +29,16 @@ func (a *Array) RowsToVectors() (vectors []vector.F64) {
 		vectors = append(vectors, row)
 	}
 
-	return vectors
+	return
 }
 
 func (a *Array) ToVector() vector.F64 {
 	if len(a.Dim) != 2 {
-		panic(fmt.Sprintf("Array is not 2-dimensional: %s", a.Dim))
+		panic(fmt.Sprintf("Array is not 2-dimensional: %v", a.Dim))
 	}
 
 	if a.Dim[0] != 1 && a.Dim[1] != 1 {
-		panic(fmt.Sprintf("One of dimensions should be 1: %s", a.Dim))
+		panic(fmt.Sprintf("One of dimensions should be 1: %v", a.Dim))
 	}
 
 	return vector.F64(a.Data)
