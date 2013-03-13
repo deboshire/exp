@@ -16,10 +16,7 @@ func ExamplePGM7_LogisticRegression() {
 	benchmarkFeatures := mat.ReadFileOrPanic("Validation1X.mat").GetArray("Validation1X").RowsToVectors()
 	benchmarkLabels := mat.ReadFileOrPanic("Validation1Y.mat").GetArray("Validation1Y").ToVector().F64ToB()
 
-	// This will be severely overfitted without regularization.
-	// benchmark precision is supposed to be low.
-	// In fact it is almost 50% :)
-	for _, iterations := range []int{100, 1000, 10000} {
+	for _, iterations := range []int{1, 10, 100, 1000} {
 		fmt.Println("---\niterations: ", iterations)
 		classifier := ai.TrainLogisticRegressionClassifier(
 			trainFeatures,
@@ -31,18 +28,23 @@ func ExamplePGM7_LogisticRegression() {
 	}
 
 	// Output:
+	// 	---
+	// iterations:  1
+	// train set:  0.925
+	// benchmark set:  0.915
+	// ---
+	// iterations:  10
+	// train set:  0.985
+	// benchmark set:  0.93
 	// ---
 	// iterations:  100
-	// train set:  0.965
-	// benchmark set:  0.515
+	// train set:  1
+	// benchmark set:  0.925
 	// ---
 	// iterations:  1000
-	// train set:  0.995
-	// benchmark set:  0.51
-	// ---
-	// iterations:  10000
 	// train set:  1
-	// benchmark set:  0.52
+	// benchmark set:  0.92
+
 }
 
 func init() {
