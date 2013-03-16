@@ -138,26 +138,23 @@ FaceModel.prototype.update = function(ctx, comp) {
 
     screenCast.start();
 
-    var effectButtons = document.querySelectorAll('ul.effects li a');
-    for (var i = 0, numberOfButtons = effectButtons.length; i < numberOfButtons; i++) {
-        effectButtons[i].addEventListener('click', function(e) {
-            e.preventDefault();
-	    var start = performance.now();
-	    var width = videoElement.videoWidth;
-	    var height = videoElement.videoHeight;
-	    ctx1.drawImage(videoElement, 0, 0, width, height);
-	    var comp = ccv.detect_objects({ "canvas" : ccv.grayscale(c1),
-					    "cascade" : cascade,
-					    "interval" : 5,
-					    "min_neighbors" : 1 });
-	    console.log(comp);
-	    drawFaces(ctx1, comp, 1);
-	    faceModel.update(ctx1, comp);
+    document.getElementById('findFacesButton').addEventListener('click', function(e) {
+        e.preventDefault();
+	var start = performance.now();
+	var width = videoElement.videoWidth;
+	var height = videoElement.videoHeight;
+	ctx1.drawImage(videoElement, 0, 0, width, height);
+	var comp = ccv.detect_objects({ "canvas" : ccv.grayscale(c1),
+					"cascade" : cascade,
+					"interval" : 5,
+					"min_neighbors" : 1 });
+	console.log(comp);
+	drawFaces(ctx1, comp, 1);
+	faceModel.update(ctx1, comp);
 			
-	    var end = performance.now();
-	    document.getElementById('stats').innerHTML = 'Total time: ' + (end - start) + ' ms';
-	    scheduleSearch();
-        });
-    }
+	var end = performance.now();
+	document.getElementById('stats').innerHTML = 'Total time: ' + (end - start) + ' ms';
+	scheduleSearch();
+    });
 
 }());
