@@ -30,6 +30,19 @@ function scheduleSearch() {
     }, 100);
 }
 
+function drawKalman(ctx, mu, sigma) {
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(87,0,230, 0.8)';
+    ctx.beginPath();
+    var kx = mu.e(1, 1);
+    var ky = mu.e(2, 1);
+    var kw = mu.e(5, 1);
+    var kh = mu.e(6, 1);
+    console.log("kx: ", kx, "ky: ", ky, "kw: ", kw, "kh: ", kh);
+    ctx.arc(kx, ky, (kw + kh) * 0.25 * 1.2, 0, Math.PI * 2);
+    ctx.stroke();
+}
+
 var FaceModel = function() {
     this.mu = $M([
 	[320],
@@ -81,18 +94,16 @@ FaceModel.prototype.update = function(ctx, comp) {
     var Q;
     var z;
     if (comp.length == 0) {
-	z = $M([
-	    [320],
-	    [240],
-	    [320],
-	    [240]
-	    ]);
 	Q = $M([
 	    [3600, 0, 0, 0],
 	    [0, 3600, 0, 0],
 	    [0, 0, 3600, 0],
 	    [0, 0, 0, 3600]
 	]);
+	var kalman = new Kalman(A, R, C, Q, this.mu, this.sigma);
+	var pred = kalman.predict();
+	console.log("mu_pred: ", pred[0].inspect(), "sigma_pred: ", pred[1].inspect());
+	drawKalman(ctx, pred[0], pred[1]);
     } else {
 	z = $M([
 	    [comp[0].x+comp[0].width/2],
@@ -107,24 +118,13 @@ FaceModel.prototype.update = function(ctx, comp) {
 	    [ 0, 0,900, 0],
 	    [ 0, 0, 0,900]
 	]);
+	var kalman = new Kalman(A, R, C, Q, this.mu, this.sigma);
+	kalman.update(z);
+	this.mu = kalman.mu;
+	this.sigma = kalman.sigma;
+	console.log("new mu: ", this.mu.inspect(), "new sigma: ", this.sigma.inspect());
+	drawKalman(ctx, this.mu, this.sigma);
     }
-    var kalman = new Kalman(A, R, C, Q, this.mu, this.sigma);
-    kalman.update(z);
-    this.mu = kalman.mu;
-    this.sigma = kalman.sigma;
-    console.log("new mu: ", this.mu.inspect(), "new sigma: ", this.sigma.inspect());
-
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = 'rgba(87,0,230, 0.8)';
-    ctx.beginPath();
-    var kx = this.mu.e(1, 1);
-    var ky = this.mu.e(2, 1);
-    var kw = this.mu.e(5, 1);
-    var kh = this.mu.e(6, 1);
-    console.log("kx: ", kx, "ky: ", ky, "kw: ", kw, "kh: ", kh);
-    ctx.arc(kx, ky, (kw + kh) * 0.25 * 1.2, 0, Math.PI * 2);
-    ctx.stroke();
-
 };
 
 (function() {
