@@ -141,18 +141,28 @@ FaceModel.prototype.update = function(ctx, comp) {
     document.getElementById('findFacesButton').addEventListener('click', function(e) {
         e.preventDefault();
 	var start = performance.now();
+	console.time("total");
 	var width = videoElement.videoWidth;
 	var height = videoElement.videoHeight;
+	console.time("drawImage");
 	ctx1.drawImage(videoElement, 0, 0, width, height);
+	console.timeEnd("drawImage");
+	console.time("detectObjects");
 	var comp = ccv.detect_objects({ "canvas" : ccv.grayscale(c1),
 					"cascade" : cascade,
 					"interval" : 5,
 					"min_neighbors" : 1 });
+	console.timeEnd("detectObjects");
 	console.log(comp);
+	console.time("drawFaces");
 	drawFaces(ctx1, comp, 1);
+	console.timeEnd("drawFaces");
+	console.time("updateFaceModel");
 	faceModel.update(ctx1, comp);
+	console.timeEnd("updateFaceModel");
 			
 	var end = performance.now();
+	console.timeEnd("total");
 	document.getElementById('stats').innerHTML = 'Total time: ' + (end - start) + ' ms';
 	scheduleSearch();
     });
