@@ -27,18 +27,18 @@ type State struct {
 // passed to Minimize function and as soon as it is less than eps, optimization
 // process is terminated.
 // todo(mike): this type name is possibly too long.
-type TerminationCriterion interface {
+type TermCrit interface {
 	ShouldTerminate(s *State) float64
 }
 
 // Termination criterion that keeps track of relative mean improvement of the
 // function value
-type RelativeMeanImprovementCriterion struct {
+type RelativeMeanImprovementCrit struct {
 	NumItersToAvg int
 	prevVals      []float64
 }
 
-func (c *RelativeMeanImprovementCriterion) ShouldTerminate(s *State) float64 {
+func (c *RelativeMeanImprovementCrit) ShouldTerminate(s *State) float64 {
 	iters := c.NumItersToAvg
 	if iters < 2 {
 		iters = 5
@@ -64,11 +64,11 @@ func (c *RelativeMeanImprovementCriterion) ShouldTerminate(s *State) float64 {
 }
 
 // Termination criterion that terminates after given number of iterations.
-type NumIterationsCriterion struct {
+type NumIterationsCrit struct {
 	NumIterations int
 }
 
-func (c *NumIterationsCriterion) ShouldTerminate(s *State) float64 {
+func (c *NumIterationsCrit) ShouldTerminate(s *State) float64 {
 	if s.Pass >= c.NumIterations-1 {
 		return 0
 	}
@@ -80,7 +80,7 @@ func (c *NumIterationsCriterion) ShouldTerminate(s *State) float64 {
 	Minimize a function of the form:
 		Sum_i{F_i(x)}, i := 0...terms
 */
-func Minimize(f ObjectiveFunc, initial vector.F64, eps float64, term TerminationCriterion, t tracer.Tracer) (value float64, coords vector.F64) {
+func Minimize(f ObjectiveFunc, initial vector.F64, eps float64, term TermCrit, t tracer.Tracer) (value float64, coords vector.F64) {
 	if t == nil {
 		t = tracer.DefaultTracer()
 	}
