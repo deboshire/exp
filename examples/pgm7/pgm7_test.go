@@ -121,17 +121,17 @@ func ExamplePGM7_LogisticRegression_Epsilon() {
 	// benchmark set:  0.93
 }
 
-func ExamplePGM7_LogisticRegression_Alpha() {
+func ExamplePGM7_LogisticRegression_Lambda() {
 	rand.Seed(98765)
 	trainFeatures, trainLabels := readTrainData()
 	benchmarkFeatures, benchmarkLabels := readBenchmarkData()
 
-	for _, alpha := range []float64{0, 0.1, 0.2, 0.4, 0.8, 1} {
-		fmt.Println("---\nalpha: ", alpha)
+	for _, lambda := range []float64{0, 0.1, 0.2, 0.4, 0.8, 1} {
+		fmt.Println("---\nlambda: ", lambda)
 		classifier := ai.TrainLogisticRegressionClassifier(
 			trainFeatures,
 			trainLabels,
-			alpha,
+			lambda,
 			&sgrad.RelativeMeanImprovementCrit{},
 			1e-2)
 		fmt.Println("train set: ", ai.EvaluateBinaryClassifier(classifier, trainFeatures, trainLabels))
@@ -140,61 +140,61 @@ func ExamplePGM7_LogisticRegression_Alpha() {
 
 	// Output:
 	// ---
-	// alpha:  0
+	// lambda:  0
 	// train set:  1
 	// benchmark set:  0.93
 	// ---
-	// alpha:  0.1
+	// lambda:  0.1
 	// train set:  0.94
 	// benchmark set:  0.93
 	// ---
-	// alpha:  0.2
+	// lambda:  0.2
 	// train set:  0.94
 	// benchmark set:  0.925
 	// ---
-	// alpha:  0.4
+	// lambda:  0.4
 	// train set:  0.925
 	// benchmark set:  0.915
 	// ---
-	// alpha:  0.8
+	// lambda:  0.8
 	// train set:  0.875
 	// benchmark set:  0.86
 	// ---
-	// alpha:  1
+	// lambda:  1
 	// train set:  0.905
 	// benchmark set:  0.905
 }
 
-func ExamplePGM7_LogisticRegression_OptimizeAlpha() {
+func ExamplePGM7_LogisticRegression_OptimizeLambda() {
 	rand.Seed(98765)
 	trainFeatures, trainLabels := readTrainData()
 	benchmarkFeatures, benchmarkLabels := readBenchmarkData()
 
-	goalFunc := func(alpha float64) float64 {
+	goalFunc := func(lambda float64) float64 {
 		score := ai.HoldoutTestBinaryClassifier(
 			trainFeatures,
 			trainLabels,
 			.1,
 			ai.NewLogisticRegressionTrainer(
-				alpha,
+				lambda,
 				&sgrad.NumIterationsCrit{NumIterations: 10},
 				1e-8))
 		return -score
 	}
 
-	alpha := gcsearh.Minimize(0, 10, goalFunc, &gcsearh.AbsoluteErrorTermCrit{}, .1)
-	fmt.Println("Optimal alpha:", alpha)
+	lambda := gcsearh.Minimize(0, 10, goalFunc, &gcsearh.AbsoluteErrorTermCrit{}, .1)
+	fmt.Println("Optimal lambda:", lambda)
 	classifier := ai.TrainLogisticRegressionClassifier(
 		trainFeatures,
 		trainLabels,
-		alpha,
+		lambda,
 		&sgrad.RelativeMeanImprovementCrit{},
 		1e-2)
 	fmt.Println("train set: ", ai.EvaluateBinaryClassifier(classifier, trainFeatures, trainLabels))
 	fmt.Println("benchmark set: ", ai.EvaluateBinaryClassifier(classifier, benchmarkFeatures, benchmarkLabels))
 
 	// Output:
-	// Optimal alpha: 1.4841053312063623
+	// Optimal lambda: 1.4841053312063623
 	// train set:  0.895
 	// benchmark set:  0.9
 }
