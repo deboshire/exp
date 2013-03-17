@@ -15,7 +15,7 @@ func TrainLogisticRegressionClassifier(
 	features []v.F64,
 	labels v.B,
 	lambda float64,
-	terminationCriterion sgrad.TerminationCriterion,
+	terminationCriterion sgrad.TermCrit,
 	eps float64) BinaryClassifier {
 	y, x := sgrad.Minimize(
 		logisticRegressionCostFunction(features, labels, lambda),
@@ -25,6 +25,15 @@ func TrainLogisticRegressionClassifier(
 		nil)
 
 	return &logisticRegressionClassifier{cost: y, theta: x}
+}
+
+func NewLogisticRegressionTrainer(
+	lambda float64,
+	terminationCriterion sgrad.TermCrit,
+	eps float64) BinarryClassifierTrainer {
+	return func(features []v.F64, labels []bool) BinaryClassifier {
+		return TrainLogisticRegressionClassifier(features, labels, lambda, terminationCriterion, eps)
+	}
 }
 
 func sigmoid(x float64) float64 {
