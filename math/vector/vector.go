@@ -3,6 +3,7 @@ package vector
 import (
 	"fmt"
 	"math"
+	"math/rand"
 )
 
 type F64 []float64
@@ -93,4 +94,11 @@ func (v F64) Eq(v1 F64, eps float64) bool {
 		}
 	}
 	return true
+}
+
+func (v B) Shuffle() {
+	for i := len(v) - 1; i > 0; i-- {
+		j := rand.Intn(i)
+		v[i], v[j] = v[j], v[i]
+	}
 }
