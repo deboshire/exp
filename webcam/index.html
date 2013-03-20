@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>ScreenCast library demo</title>
+    <link href='http://fonts.googleapis.com/css?family=Ranchers' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="third_party/ScreenCast/public/style/style.css">
+    <script>
+      if (window!=top){top.location.href=location.href;}
+      document.createElement('header');
+      document.createElement('nav');
+      document.createElement('section');
+      document.createElement('article');
+      document.createElement('aside');
+      document.createElement('footer');
+      document.createElement('time');
+    </script>
+  </head>
+  <body>
+    <header>
+      <ul class="effects">
+        <li><a href="#" class="button blue" id="findFacesButton">Find Faces</a></li>
+      </ul>
+      <div id="stats"></div>
+    </header>
+    <div id="body">
+      <div style="float:left;">
+	<video autoplay="autoplay"></video>
+      </div>
+      <div style="float:left;">
+	<canvas id="c1" width="640" height="480"></canvas>
+      </div>
+    </div>
+    <script src="third_party/ScreenCast/public/js/ScreenCast/ScreenCast.js"></script>
+    <script src="third_party/ccv/ccv.js"></script>
+    <script src="third_party/ccv/face.js"></script>
+    <script src="third_party/sylvester/lib/sylvester.js"></script>
+    <script src="js/kalman.js"></script>
+    <script src="js/main.js"></script>
+  </body>
+</html>
