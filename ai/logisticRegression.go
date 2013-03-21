@@ -2,7 +2,7 @@ package ai
 
 import (
 	v "github.com/deboshire/exp/math/vector"
-	"github.com/deboshire/exp/optimization/sgrad"
+	"github.com/deboshire/exp/math/opt/sgrad"
 	"math"
 )
 
@@ -14,16 +14,26 @@ type logisticRegressionClassifier struct {
 func TrainLogisticRegressionClassifier(
 	features []v.F64,
 	labels v.B,
-	terminationCriterion sgrad.TerminationCriterion,
+	lambda float64,
+	termCrit sgrad.TermCrit,
 	eps float64) BinaryClassifier {
 	y, x := sgrad.Minimize(
-		logisticRegressionCostFunction(features, labels),
+		logisticRegressionCostFunction(features, labels, lambda),
 		v.Zeroes(len(features[0])),
 		eps,
-		terminationCriterion,
+		termCrit,
 		nil)
 
 	return &logisticRegressionClassifier{cost: y, theta: x}
+}
+
+func NewLogisticRegressionTrainer(
+	lambda float64,
+	termCrit sgrad.TermCrit,
+	eps float64) BinaryClassifierTrainer {
+	return func(features []v.F64, labels []bool) BinaryClassifier {
+		return TrainLogisticRegressionClassifier(features, labels, lambda, termCrit, eps)
+	}
 }
 
 func sigmoid(x float64) float64 {
@@ -31,7 +41,7 @@ func sigmoid(x float64) float64 {
 }
 
 // http://mathurl.com/bmfs3db
-func logisticRegressionCostFunction(features []v.F64, labels v.B) sgrad.ObjectiveFunc {
+func logisticRegressionCostFunction(features []v.F64, labels v.B, lambda float64) sgrad.ObjectiveFunc {
 	f := func(idx int, x v.F64, gradient v.F64) (value float64) {
 		feature := features[idx]
 		label := labels[idx]
@@ -45,6 +55,14 @@ func logisticRegressionCostFunction(features []v.F64, labels v.B) sgrad.Objectiv
 		} else {
 			value = -math.Log(1.0 - h)
 			gradient.Mul(h)
+		}
+
+		if lambda != 0.0 {
+			// apply regularizaiton.
+			for i := 1; i < len(x); i++ {
+				value += 0.5 * lambda * x[i] * x[i]
+				gradient[i] += lambda * x[i]
+			}
 		}
 
 		return
