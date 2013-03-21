@@ -63,6 +63,13 @@ func addr(v F64) unsafe.Pointer {
 func (v F64) Dist2(v1 F64) float64 {
 	assertSameLen(v, v1)
 	return float64(C.dist2(addr(v), addr(v1), C.int(len(v))))
+
+	// d := 0.0
+	// for i := range v {
+	// 	a := v[i] - v1[i]
+	// 	d += a * a
+	// }
+	// return d
 }
 
 func (v F64) Len() int {
