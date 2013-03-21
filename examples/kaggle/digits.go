@@ -8,6 +8,7 @@ import (
 	v "github.com/deboshire/exp/math/vector"
 	"github.com/deboshire/exp/optimization/sgrad"
 	"os"
+	"runtime/pprof"
 	"strconv"
 )
 
@@ -25,6 +26,15 @@ func parseVector(strs []string) (res v.F64, err error) {
 }
 
 func main() {
+	{
+		f, err := os.Create("digits.prof")
+		if err != nil {
+			panic(err)
+		}
+		pprof.StartCPUProfile(f)
+	}
+	defer pprof.StopCPUProfile()
+
 	fmt.Print("Reading training data...")
 	file, err := os.Open(os.ExpandEnv("$HOME/Dropbox/Projects/kaggle/digits/train.csv"))
 	if err != nil {
@@ -42,8 +52,7 @@ func main() {
 	labels := make([]int, len(allData))
 	pixels := make([]v.F64, len(allData))
 
-	// TODO: add bias
-
+	// TODO(mike): add bias term
 	for i, row := range allData {
 		parsedLabel, err := strconv.ParseInt(row[0], 10, 32)
 		if err != nil {
@@ -64,6 +73,6 @@ func main() {
 		return classifier
 	}
 
-	classifier := ai.TrainMultinomialClassifierFromBinary(pixels, labels, 10, binClassifierTrainer)
+	classifier := ai.TrainNominalClassifierFromBinary(pixels, labels, 10, binClassifierTrainer)
 	fmt.Println(classifier)
 }
