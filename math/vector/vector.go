@@ -3,7 +3,14 @@ package vector
 import (
 	"fmt"
 	"math"
+	"math/rand"
+	"reflect"
+	"unsafe"
 )
+
+// #cgo CFLAGS:-O3 -ffast-math
+// #include "vector.h"
+import "C"
 
 type F64 []float64
 type B []bool
@@ -48,14 +55,21 @@ func (v F64) Mul(s float64) {
 	}
 }
 
+func addr(v F64) unsafe.Pointer {
+	header := *(*reflect.SliceHeader)(unsafe.Pointer(&v))
+	return unsafe.Pointer(header.Data)
+}
+
 func (v F64) Dist2(v1 F64) float64 {
 	assertSameLen(v, v1)
-	d := 0.0
-	for i := range v {
-		a := v[i] - v1[i]
-		d += a * a
-	}
-	return d
+	return float64(C.dist2(addr(v), addr(v1), C.int(len(v))))
+
+	// d := 0.0
+	// for i := range v {
+	// 	a := v[i] - v1[i]
+	// 	d += a * a
+	// }
+	// return d
 }
 
 func (v F64) Len() int {
@@ -93,4 +107,11 @@ func (v F64) Eq(v1 F64, eps float64) bool {
 		}
 	}
 	return true
+}
+
+func (v B) Shuffle() {
+	for i := len(v) - 1; i > 0; i-- {
+		j := rand.Intn(i)
+		v[i], v[j] = v[j], v[i]
+	}
 }

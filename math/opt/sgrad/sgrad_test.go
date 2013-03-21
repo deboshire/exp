@@ -13,7 +13,7 @@ func TestLeastSquaresPrecise(t *testing.T) {
 		vector.F64{2, 2},
 	})
 
-	term := RelativeMeanImprovementCriterion{NumItersToAvg: 10}
+	term := RelativeMeanImprovementCrit{NumItersToAvg: 10}
 	v, coords := Minimize(f, vector.Zeroes(2), 1e-10, &term, nil)
 	t.Log("Value: ", v, "Coords: ", coords)
 
@@ -34,7 +34,7 @@ func TestLeastSquares(t *testing.T) {
 		vector.F64{4, 10},
 	})
 
-	term := RelativeMeanImprovementCriterion{NumItersToAvg: 10}
+	term := RelativeMeanImprovementCrit{NumItersToAvg: 10}
 	v, coords := Minimize(f, vector.Zeroes(2), 1e-8, &term, nil)
 	t.Log("Value: ", v, "Coords: ", coords)
 	if math.Abs(coords[0]-3.5) > 1e-1 {
@@ -51,7 +51,7 @@ func BenchmarkLeastSquare(b *testing.B) {
 		vector.F64{2, 2},
 	})
 
-	term := NumIterationsCriterion{NumIterations: 1}
+	term := NumIterationsCrit{NumIterations: 1}
 
 	for i := 0; i < b.N; i++ {
 		Minimize(f, vector.Zeroes(2), 1e-8, &term, nil)
