@@ -13,6 +13,14 @@ type BinaryClassifier interface {
 
 type BinarryClassifierTrainer func(features []v.F64, labels []bool) BinaryClassifier
 
+type NominalClassifier interface {
+	Classify(features v.F64) (result int, confidence float64)
+}
+
+type compoundNominalClassifier struct {
+	classifiers []BinaryClassifier
+}
+
 // Evaluate binary classifier on a given data.
 // Returns percentage of correct hits.
 func EvaluateBinaryClassifier(c BinaryClassifier, features []v.F64, labels v.B) float64 {
@@ -34,26 +42,19 @@ func EvaluateBinaryClassifier(c BinaryClassifier, features []v.F64, labels v.B) 
 	return float64(successes) / float64(len(features))
 }
 
-type MultinomialClassifier interface {
-	Classify(features v.F64) (result int, confidence float64)
-}
-
-type compoundMultinomialClassifier struct {
-	classifiers []BinaryClassifier
-}
-
-func (c *compoundMultinomialClassifier) Classify(features v.F64) (result int, confidence float64) {
+func (c *compoundNominalClassifier) Classify(features v.F64) (result int, confidence float64) {
 	panic("not implemented")
 }
 
-func TrainMultinomialClassifierFromBinary(
+func TrainNominalClassifierFromBinary(
 	features []v.F64,
 	labels []int,
 	labelsCardinality int,
-	binaryTrainer BinarryClassifierTrainer) MultinomialClassifier {
+	binaryTrainer BinarryClassifierTrainer) NominalClassifier {
 
 	classifiers := make([]BinaryClassifier, labelsCardinality)
 
+	// TODO(mike): parallelize
 	for i := 0; i < labelsCardinality; i++ {
 		boolLabels := make([]bool, len(labels))
 		for j, l := range labels {
@@ -63,7 +64,7 @@ func TrainMultinomialClassifierFromBinary(
 		classifiers[i] = binaryTrainer(features, boolLabels)
 	}
 
-	return &compoundMultinomialClassifier{classifiers: classifiers}
+	return &compoundNominalClassifier{classifiers: classifiers}
 }
 
 func shuffleFeaturesAndLabels(features []v.F64, labels v.B) {
