@@ -1,6 +1,6 @@
 // Golden Section Search
 // https://en.wikipedia.org/wiki/Golden_section_search
-package gcsearh
+package gssearh
 
 import (
 	"math"
@@ -26,16 +26,15 @@ type TermCrit interface {
 	ShouldTerminate(s *State) float64
 }
 
-type AbsoluteErrorTermCrit struct { }
+type AbsoluteErrorTermCrit struct{}
 
 func (c *AbsoluteErrorTermCrit) ShouldTerminate(s *State) float64 {
-	return math.Abs(s.C - s.A) / (math.Abs(s.B) + math.Abs(s.X))
+	return math.Abs(s.C-s.A) / (math.Abs(s.B) + math.Abs(s.X))
 }
 
-
 func Minimize(minX float64, maxX float64, f func(float64) float64, termCrit TermCrit, eps float64) (res float64) {
-	b := minX+resphi*(maxX-minX)
-	return minimize(State{A: minX, B: b, C: maxX, FB: f(b) }, f, termCrit, eps)
+	b := minX + resphi*(maxX-minX)
+	return minimize(State{A: minX, B: b, C: maxX, FB: f(b)}, f, termCrit, eps)
 }
 
 func minimize(state State, f func(float64) float64, termCrit TermCrit, eps float64) (res float64) {
@@ -54,7 +53,7 @@ func minimize(state State, f func(float64) float64, termCrit TermCrit, eps float
 		x := state.X
 		state.FX = f(x)
 
-		if (termCrit.ShouldTerminate(&state) < eps) {
+		if termCrit.ShouldTerminate(&state) < eps {
 			return (a + c) / 2
 		}
 
