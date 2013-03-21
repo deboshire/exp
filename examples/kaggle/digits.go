@@ -6,14 +6,14 @@ import (
 	"flag"
 	"fmt"
 	"github.com/deboshire/exp/ai"
+	"github.com/deboshire/exp/math/opt/sgrad"
 	v "github.com/deboshire/exp/math/vector"
-	"github.com/deboshire/exp/optimization/sgrad"
 	"os"
 	"runtime/pprof"
 	"strconv"
 )
 
-var trainCsvPath =flag.String("train-csv", "", "Path to train.csv file from kaggle")
+var trainCsvPath = flag.String("train-csv", "", "Path to train.csv file from kaggle")
 
 func parseVector(strs []string) (res v.F64, err error) {
 	res = v.Zeroes(len(strs))

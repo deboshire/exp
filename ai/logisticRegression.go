@@ -2,7 +2,7 @@ package ai
 
 import (
 	v "github.com/deboshire/exp/math/vector"
-	"github.com/deboshire/exp/optimization/sgrad"
+	"github.com/deboshire/exp/math/opt/sgrad"
 	"math"
 )
 

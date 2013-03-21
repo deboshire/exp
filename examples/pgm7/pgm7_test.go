@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"github.com/deboshire/exp/ai"
 	"github.com/deboshire/exp/io/mat"
+	"github.com/deboshire/exp/math/opt/gssearch"
+	"github.com/deboshire/exp/math/opt/sgrad"
 	v "github.com/deboshire/exp/math/vector"
-	"github.com/deboshire/exp/optimization/gssearch"
-	"github.com/deboshire/exp/optimization/sgrad"
 	"math/rand"
 )
 
