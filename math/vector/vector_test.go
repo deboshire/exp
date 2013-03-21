@@ -12,3 +12,13 @@ func TestDist2(t *testing.T) {
 		t.Error("Bad distance:", v1.Dist2(v2))
 	}
 }
+
+
+func BenchmarkDist2(b *testing.B) {
+	v1 := Zeroes(10000)
+	v2 := Zeroes(10000)
+
+	for i := 0; i < b.N; i++ {
+		v1.Dist2(v2)
+	}
+}
