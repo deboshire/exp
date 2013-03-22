@@ -3,14 +3,17 @@ package main
 import (
 	"bufio"
 	"encoding/csv"
+	"flag"
 	"fmt"
 	"github.com/deboshire/exp/ai"
+	"github.com/deboshire/exp/math/opt/sgrad"
 	v "github.com/deboshire/exp/math/vector"
-	"github.com/deboshire/exp/optimization/sgrad"
 	"os"
 	"runtime/pprof"
 	"strconv"
 )
+
+var trainCsvPath = flag.String("train-csv", "", "Path to train.csv file from kaggle")
 
 func parseVector(strs []string) (res v.F64, err error) {
 	res = v.Zeroes(len(strs))
@@ -26,6 +29,8 @@ func parseVector(strs []string) (res v.F64, err error) {
 }
 
 func main() {
+	flag.Parse()
+
 	{
 		f, err := os.Create("digits.prof")
 		if err != nil {
@@ -36,7 +41,7 @@ func main() {
 	defer pprof.StopCPUProfile()
 
 	fmt.Print("Reading training data...")
-	file, err := os.Open(os.ExpandEnv("$HOME/Dropbox/Projects/kaggle/digits/train.csv"))
+	file, err := os.Open(*trainCsvPath)
 	if err != nil {
 		panic(err)
 	}

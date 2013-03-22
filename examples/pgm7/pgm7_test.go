@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"github.com/deboshire/exp/ai"
 	"github.com/deboshire/exp/io/mat"
+	"github.com/deboshire/exp/math/opt/gssearch"
+	"github.com/deboshire/exp/math/opt/sgrad"
 	v "github.com/deboshire/exp/math/vector"
-	"github.com/deboshire/exp/optimization/gcsearch"
-	"github.com/deboshire/exp/optimization/sgrad"
 	"math/rand"
 )
 
@@ -182,7 +182,7 @@ func ExamplePGM7_LogisticRegression_OptimizeLambda() {
 		return -score
 	}
 
-	lambda := gcsearh.Minimize(0, 10, goalFunc, &gcsearh.AbsoluteErrorTermCrit{}, .1)
+	lambda := gssearh.Minimize(0, 10, goalFunc, &gssearh.AbsoluteErrorTermCrit{}, .1)
 	fmt.Println("Optimal lambda:", lambda)
 	classifier := ai.TrainLogisticRegressionClassifier(
 		trainFeatures,

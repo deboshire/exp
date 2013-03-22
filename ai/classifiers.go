@@ -11,7 +11,7 @@ type BinaryClassifier interface {
 	Classify(features v.F64) (result bool, confidence float64)
 }
 
-type BinarryClassifierTrainer func(features []v.F64, labels []bool) BinaryClassifier
+type BinaryClassifierTrainer func(features []v.F64, labels []bool) BinaryClassifier
 
 type NominalClassifier interface {
 	Classify(features v.F64) (result int, confidence float64)
@@ -30,8 +30,7 @@ func EvaluateBinaryClassifier(c BinaryClassifier, features []v.F64, labels v.B) 
 
 	successes := 0
 
-	for i := range features {
-		feature := features[i]
+	for i, feature := range features {
 		label := labels[i]
 		l1, _ := c.Classify(feature)
 		if l1 == label {
@@ -50,7 +49,7 @@ func TrainNominalClassifierFromBinary(
 	features []v.F64,
 	labels []int,
 	labelsCardinality int,
-	binaryTrainer BinarryClassifierTrainer) NominalClassifier {
+	binaryTrainer BinaryClassifierTrainer) NominalClassifier {
 
 	classifiers := make([]BinaryClassifier, labelsCardinality)
 
@@ -75,7 +74,7 @@ func shuffleFeaturesAndLabels(features []v.F64, labels v.B) {
 	}
 }
 
-func HoldoutTestBinaryClassifier(features []v.F64, labels v.B, testingFraction float64, binaryTrainer BinarryClassifierTrainer) float64 {
+func HoldoutTestBinaryClassifier(features []v.F64, labels v.B, testingFraction float64, binaryTrainer BinaryClassifierTrainer) float64 {
 	shuffleFeaturesAndLabels(features, labels)
 
 	idx := int(float64(len(features)) * (1 - testingFraction))
