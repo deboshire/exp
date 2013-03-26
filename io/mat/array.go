@@ -3,6 +3,7 @@ package mat
 
 import (
 	"fmt"
+	"github.com/deboshire/exp/ai/data"
 	"github.com/deboshire/exp/math/vector"
 )
 
@@ -24,7 +25,7 @@ func (a *Array) RowsToVectors() (vectors []vector.F64) {
 	for i := 0; i < rows; i++ {
 		row := make([]float64, rowLen)
 		for j := 0; j < rowLen; j++ {
-			row[j] = data[i + j * rows]
+			row[j] = data[i+j*rows]
 		}
 		vectors = append(vectors, row)
 	}
@@ -42,4 +43,27 @@ func (a *Array) ToVector() vector.F64 {
 	}
 
 	return vector.F64(a.Data)
+}
+
+func (a *Array) RowsToInstances() data.Instances {
+	if len(a.Dim) != 2 {
+		panic(fmt.Sprintf("Array is not 2-dimensional: %v", a.Dim))
+	}
+
+	numRows := int(a.Dim[0])
+	rowLen := int(a.Dim[1])
+	rows := make([]vector.F64, numRows)
+
+	for i := range rows {
+		rows[i] = vector.Zeroes(rowLen)
+		for j := 0; j < rowLen; j++ {
+			rows[i][j] = a.Data[i+j*numRows]
+		}
+	}
+
+	return data.FromRows(rows, data.Attr{Name: a.Name, Type: data.TYPE_NUMERIC}.Repeat(rowLen))
+}
+
+func (a *Array) Rename(name string) *Array {
+	return &Array{Name: name, Dim: a.Dim, Data: a.Data}
 }

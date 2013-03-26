@@ -256,7 +256,7 @@ func (f *matFileImpl) Array(name string) *Array {
 		}
 	}
 
-	return nil
+	panic(fmt.Errorf("Array %s found", name))
 }
 
 func MustRead(fileName string) MatFile {

@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/deboshire/exp/ai"
+	"github.com/deboshire/exp/ai/classifiers"
 	"github.com/deboshire/exp/math/opt/sgrad"
 	v "github.com/deboshire/exp/math/vector"
 	"os"
@@ -67,17 +68,22 @@ func main() {
 		pixels[i], err = parseVector(row[1:])
 	}
 
-	binClassifierTrainer := func(features []v.F64, labels []bool) ai.BinaryClassifier {
-		fmt.Println("Training binary classifier")
-		classifier := ai.TrainLogisticRegressionClassifier(
-			features,
-			labels,
-			0,
-			&sgrad.NumIterationsCrit{NumIterations: 10},
-			1e-8)
-		return classifier
-	}
+	// binTrainer := func(features []v.F64, labels []bool) ai.Classifier {
+	// 	fmt.Println("Training binary classifier")
+	// 	classifier := ai.TrainLogisticRegressionClassifier(
+	// 		features,
+	// 		labels,
+	// 		0,
+	// 		&sgrad.NumIterationsCrit{NumIterations: 10},
+	// 		1e-8)
+	// 	return classifier
+	// }
 
-	classifier := ai.TrainNominalClassifierFromBinary(pixels, labels, 10, binClassifierTrainer)
+	binTrainer := &ai.LogisticRegressionTrainer{
+		Lambda: 0,
+		TermCrit: &sgrad.NumIterationsCrit{NumIterations: 10},
+		Eps: 1e-8}
+
+	classifier := classifiers.NominalClassifierTrainerFromBinary(pixels, labels, 10, binTrainer)
 	fmt.Println(classifier)
 }
