@@ -35,6 +35,13 @@ func Zeroes(size int) F64 {
 	return F64(make([]float64, size))
 }
 
+func (v F64) Fill(a float64) F64 {
+	for i := range v {
+		v[i] = a
+	}
+	return v
+}
+
 func (v F64) Sub(v1 F64) {
 	assertSameLen(v, v1)
 	for i := range v {
@@ -78,12 +85,13 @@ func (v F64) Len() int {
 
 func (v F64) DotProduct(v1 F64) float64 {
 	assertSameLen(v, v1)
+	return float64(C.dot(addr(v), addr(v1), C.int(len(v))))
 
-	result := 0.0
-	for i := range v {
-		result += v[i] * v1[i]
-	}
-	return result
+	// result := 0.0
+	// for i := range v {
+	// 	result += v[i] * v1[i]
+	// }
+	// return result
 }
 
 func (v F64) F64ToB() B {

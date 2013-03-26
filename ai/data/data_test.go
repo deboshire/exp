@@ -32,7 +32,7 @@ func TestDataDefinition(t *testing.T) {
 
 	instances := Of(d)
 
-	if instances.Len != 14 {
-		t.Errorf("Bad length: %d", instances.Len)
+	if instances.Len() != 14 {
+		t.Errorf("Bad length: %d", instances.Len())
 	}
 }

@@ -12,11 +12,6 @@ import (
 	"math/rand"
 )
 
-type ObjectiveFunc struct {
-	Terms int
-	F     func(idx int, x vector.F64, out_gradient vector.F64) float64
-}
-
 type State struct {
 	Tracer tracer.Tracer
 	Pass   int
@@ -76,6 +71,11 @@ func (c *NumIterationsCrit) ShouldTerminate(s *State) float64 {
 
 }
 
+type ObjectiveFunc struct {
+	Terms int
+	F     func(idx int, x vector.F64, out_gradient vector.F64) float64
+}
+
 /*
 	Minimize a function of the form:
 		Sum_i{F_i(x)}, i := 0...terms
@@ -91,7 +91,6 @@ func Minimize(f ObjectiveFunc, initial vector.F64, eps float64, term TermCrit, t
 
 	for pass := 0; ; pass++ {
 		s.Pass = pass
-		perm := rand.Perm(f.Terms)
 		maxDist := 0.0
 
 		// todo(mike): there's some theory about choosing alpha.
@@ -99,12 +98,10 @@ func Minimize(f ObjectiveFunc, initial vector.F64, eps float64, term TermCrit, t
 		alpha := .1 / (1 + math.Sqrt(float64(pass)))
 		t.TraceFloat64("alpha", alpha)
 
-		for _, idx := range perm {
-			t.TraceInt("idx", idx)
-
+		for i := 0; i < f.Terms; i++ {
 			t.TraceF64("x", x)
 
-			y:= f.F(idx, x, grad)
+			y := f.F(i, x, grad)
 			t.TraceF64("grad", grad)
 			t.TraceFloat64("y", y)
 
@@ -140,7 +137,10 @@ func Minimize(f ObjectiveFunc, initial vector.F64, eps float64, term TermCrit, t
 func LeastSquares(points []vector.F64) ObjectiveFunc {
 	dim := len(points[0])
 
+	perm := rand.Perm(len(points))
+
 	f := func(idx int, x vector.F64, gradient vector.F64) (value float64) {
+		idx = perm[idx]
 		// The function itself is:
 		// (x[0] + x[1]*points[idx][0] + x[2]*points[idx][1] + .... - points[-1])^2
 		a := x[0]

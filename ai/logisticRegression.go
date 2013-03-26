@@ -1,39 +1,35 @@
 package ai
 
 import (
-	v "github.com/deboshire/exp/math/vector"
+	"github.com/deboshire/exp/ai/data"
 	"github.com/deboshire/exp/math/opt/sgrad"
+	v "github.com/deboshire/exp/math/vector"
 	"math"
 )
 
 type logisticRegressionClassifier struct {
-	cost  float64
-	theta v.F64
+	cost         float64
+	theta        v.F64
+	featureAttrs data.Attributes
 }
 
-func TrainLogisticRegressionClassifier(
-	features []v.F64,
-	labels v.B,
-	lambda float64,
-	termCrit sgrad.TermCrit,
-	eps float64) BinaryClassifier {
+type LogisticRegressionTrainer struct {
+	Lambda   float64
+	TermCrit sgrad.TermCrit
+	Eps      float64
+}
+
+func (t LogisticRegressionTrainer) Train(instances data.Instances, classAttr data.Attr) Classifier {
+	featureAttrs := instances.Attrs().Without(classAttr)
+
 	y, x := sgrad.Minimize(
-		logisticRegressionCostFunction(features, labels, lambda),
-		v.Zeroes(len(features[0])),
-		eps,
-		termCrit,
+		logisticRegressionCostFunction(instances, classAttr, t.Lambda),
+		v.Zeroes(len(instances.Attrs())-1),
+		t.Eps,
+		t.TermCrit,
 		nil)
 
-	return &logisticRegressionClassifier{cost: y, theta: x}
-}
-
-func NewLogisticRegressionTrainer(
-	lambda float64,
-	termCrit sgrad.TermCrit,
-	eps float64) BinaryClassifierTrainer {
-	return func(features []v.F64, labels []bool) BinaryClassifier {
-		return TrainLogisticRegressionClassifier(features, labels, lambda, termCrit, eps)
-	}
+	return &logisticRegressionClassifier{cost: y, theta: x, featureAttrs: featureAttrs}
 }
 
 func sigmoid(x float64) float64 {
@@ -41,15 +37,20 @@ func sigmoid(x float64) float64 {
 }
 
 // http://mathurl.com/bmfs3db
-func logisticRegressionCostFunction(features []v.F64, labels v.B, lambda float64) sgrad.ObjectiveFunc {
+func logisticRegressionCostFunction(instances data.Instances, classAttr data.Attr, lambda float64) sgrad.ObjectiveFunc {
+	featureAttrs := instances.Attrs().Without(classAttr)
+
+	features := instances.View(featureAttrs)
+	labels := instances.View([]data.Attr{classAttr})
+
 	f := func(idx int, x v.F64, gradient v.F64) (value float64) {
 		feature := features[idx]
-		label := labels[idx]
+		label := labels[idx][0]
 
 		h := sigmoid(x.DotProduct(feature))
 		feature.CopyTo(gradient)
 
-		if label {
+		if label != 0 {
 			value = -math.Log(h)
 			gradient.Mul(h - 1.0)
 		} else {
@@ -68,10 +69,28 @@ func logisticRegressionCostFunction(features []v.F64, labels v.B, lambda float64
 		return
 	}
 
-	return sgrad.ObjectiveFunc{Terms: len(features), F: f}
+	return sgrad.ObjectiveFunc{Terms: instances.Len(), F: f}
 }
 
-func (c *logisticRegressionClassifier) Classify(features v.F64) (res bool, confidence float64) {
+func (c *logisticRegressionClassifier) ClassType() data.AttrType {
+	return data.TYPE_BOOL
+}
+
+type logitClassification struct {
+	h float64
+}
+
+func (c *logitClassification) MostLikelyClass() (class float64, probability float64) {
+	class = 0
+	if c.h >= 0.5 {
+		class = 1
+	}
+	probability = math.Abs(0.5-c.h) * 2.0
+	return
+}
+
+func (c *logisticRegressionClassifier) Classify(instance data.Instance) Classification {
+	features := instance.View(c.featureAttrs)
 	h := sigmoid(c.theta.DotProduct(features))
-	return h >= 0.5, math.Abs(0.5-h) * 2.0
+	return &logitClassification{h: h}
 }
