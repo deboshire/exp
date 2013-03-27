@@ -45,7 +45,7 @@ func (a *Array) ToVector() vector.F64 {
 	return vector.F64(a.Data)
 }
 
-func (a *Array) RowsToInstances() data.Instances {
+func (a *Array) RowsToTable() data.Table {
 	if len(a.Dim) != 2 {
 		panic(fmt.Sprintf("Array is not 2-dimensional: %v", a.Dim))
 	}

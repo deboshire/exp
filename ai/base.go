@@ -18,10 +18,10 @@ type Classifier interface {
 	// Describes the class attribute type that this classifier provides.
 	ClassType() data.AttrType
 
-	// Classify a single data instance.
-	Classify(instance data.Instance) Classification
+	// Classify a single data row.
+	Classify(row data.Row) Classification
 }
 
 type ClassifierTrainer interface {
-	Train(instances data.Instances, classAttribute data.Attr) Classifier
+	Train(table data.Table, classAttribute data.Attr) Classifier
 }

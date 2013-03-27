@@ -8,92 +8,101 @@ import (
 	"reflect"
 )
 
-type Instance interface {
+type Row interface {
 	View(attrs []Attr) vector.F64
 	Get(attr Attr) float64
 }
 
-type Instances interface {
+type Table interface {
 	Len() int
 	Attrs() Attributes
 
-	Get(idx int) Instance
+	Get(idx int) Row
 	View(attrs []Attr) []vector.F64
 
-	Perm(perm []int) Instances
-	Shuffled() Instances
-	Split(idx int) (Instances, Instances)
+	Perm(perm []int) Table
+	Shuffled() Table
+	Split(idx int) (Table, Table)
 }
 
-type arrayInstances struct {
+type arrayTable struct {
 	attrs  Attributes
-	values []vector.F64 // each Values[i] is an Instance
+	values []vector.F64 // each values[i] is a row
 }
 
-func (a *arrayInstances) Len() int {
+type arrayRow struct {
+	table *arrayTable
+	idx   int
+}
+
+type zippedTable struct {
+	attrs  Attributes
+	tables []Table
+}
+
+type zippedRow struct {
+	table *zippedTable
+	idx   int
+}
+
+func (a *arrayTable) Len() int {
 	return len(a.values)
 }
 
-func (a *arrayInstances) Attrs() Attributes {
+func (a *arrayTable) Attrs() Attributes {
 	return a.attrs
 }
 
-func (a *arrayInstances) Shuffled() Instances {
+func (a *arrayTable) Shuffled() Table {
 	return a.Perm(rand.Perm(a.Len()))
 }
 
-func (a *arrayInstances) Split(idx int) (Instances, Instances) {
+func (a *arrayTable) Split(idx int) (Table, Table) {
 	values1 := make([]vector.F64, idx)
 	values2 := make([]vector.F64, a.Len()-idx)
 
 	copy(values1, a.values[:idx])
 	copy(values2, a.values[idx:])
-	return &arrayInstances{attrs: a.attrs, values: values1},
-		&arrayInstances{attrs: a.attrs, values: values2}
+	return &arrayTable{attrs: a.attrs, values: values1},
+		&arrayTable{attrs: a.attrs, values: values2}
 }
 
-func (a *arrayInstances) Perm(perm []int) Instances {
+func (a *arrayTable) Perm(perm []int) Table {
 	values := make([]vector.F64, a.Len())
 
 	for i, j := range perm {
 		values[i] = a.values[j]
 	}
-	return &arrayInstances{attrs: a.attrs, values: values}
+	return &arrayTable{attrs: a.attrs, values: values}
 }
 
-func (a *arrayInstances) View(attrs []Attr) []vector.F64 {
+func (a *arrayTable) View(attrs []Attr) []vector.F64 {
 	// fast path first
-	if (a.attrs.Eq(attrs)) {
+	if a.attrs.Eq(attrs) {
 		return a.values
 	}
 
 	panic("attr remapping is not implemented")
 }
 
-type arrayInstance struct {
-	ai *arrayInstances
-	idx int
+func (t *arrayTable) Get(idx int) Row {
+	return &arrayRow{table: t, idx: idx}
 }
 
-func (a *arrayInstances) Get(idx int) Instance {
-	return &arrayInstance{ai: a, idx: idx}
-}
-
-func (a *arrayInstance) View(attrs []Attr) vector.F64 {
+func (r *arrayRow) View(attrs []Attr) vector.F64 {
 	// fast path first
-	if (a.ai.attrs.Eq(attrs)) {
-		return a.ai.values[a.idx]
+	if r.table.attrs.Eq(attrs) {
+		return r.table.values[r.idx]
 	}
 
 	panic("attr remapping is not implemented")
 }
 
-func (a *arrayInstance) Get(attr Attr) float64 {
-	return a.ai.values[a.idx][a.ai.attrs.IndexOf(attr)]
+func (r *arrayRow) Get(attr Attr) float64 {
+	return r.table.values[r.idx][r.table.attrs.IndexOf(attr)]
 }
 
-
-func Of(arr interface{}) Instances {
+func Of(arr interface{}) Table {
 	t := reflect.TypeOf(arr)
 
 	if t.Kind() != reflect.Slice {
@@ -123,14 +132,14 @@ func Of(arr interface{}) Instances {
 		uniqueValues[i] = make(map[string]int)
 	}
 
-	instances := arrayInstances{
+	table := arrayTable{
 		attrs:  attrs,
 		values: make([]vector.F64, length),
 	}
 
 	for i := 0; i < length; i++ {
 		element := v.Index(i)
-		instances.values[i] = make([]float64, numFields)
+		table.values[i] = make([]float64, numFields)
 
 		for j := range fields {
 			switch fields[j].Type.Kind() {
@@ -142,14 +151,14 @@ func Of(arr interface{}) Instances {
 					idx = len(fieldValues)
 					fieldValues[value] = idx
 				}
-				instances.values[i][j] = float64(idx)
+				table.values[i][j] = float64(idx)
 
 			case reflect.Bool:
 				value := element.Field(j).Bool()
 				if value {
-					instances.values[i][j] = 1
+					table.values[i][j] = 1
 				} else {
-					instances.values[i][j] = 0
+					table.values[i][j] = 0
 				}
 			}
 		}
@@ -169,118 +178,108 @@ func Of(arr interface{}) Instances {
 		}
 	}
 
-	return &instances
+	return &table
 }
 
-type zippedInstances struct {
-	attrs Attributes
-	ii    []Instances
+func (t *zippedTable) Len() int {
+	return t.tables[0].Len()
 }
 
-func (zi *zippedInstances) Len() int {
-	return zi.ii[0].Len()
+func (t *zippedTable) Attrs() Attributes {
+	return t.attrs
 }
 
-func (zi *zippedInstances) Attrs() Attributes {
-	return zi.attrs
-}
-
-func (zi *zippedInstances) Shuffled() Instances {
+func (zi *zippedTable) Shuffled() Table {
 	perm := rand.Perm(zi.Len())
 	return zi.Perm(perm)
 }
 
-func (zi *zippedInstances) Split(idx int) (Instances, Instances) {
-	ii1 := make([]Instances, len(zi.ii))
-	ii2 := make([]Instances, len(zi.ii))
+func (t *zippedTable) Split(idx int) (Table, Table) {
+	tables1 := make([]Table, len(t.tables))
+	tables2 := make([]Table, len(t.tables))
 
-	for i, instances := range zi.ii {
-		ii1[i], ii2[i] = instances.Split(idx)
+	for i, table := range t.tables {
+		tables1[i], tables2[i] = table.Split(idx)
 	}
-	return &zippedInstances{attrs: zi.attrs, ii: ii1},
-		&zippedInstances{attrs: zi.attrs, ii: ii2}
+	return &zippedTable{attrs: t.attrs, tables: tables1},
+		&zippedTable{attrs: t.attrs, tables: tables2}
 }
 
-func (zi *zippedInstances) Perm(perm []int) Instances {
-	ii := make([]Instances, len(zi.ii))
-	for i, instances := range zi.ii {
-		ii[i] = instances.Perm(perm)
+func (t *zippedTable) Perm(perm []int) Table {
+	tables := make([]Table, len(t.tables))
+	for i, table := range t.tables {
+		tables[i] = table.Perm(perm)
 	}
-	return &zippedInstances{
-		attrs: zi.attrs,
-		ii:    ii,
+	return &zippedTable{
+		attrs: t.attrs,
+		tables:     tables,
 	}
 }
 
-func (zi *zippedInstances) View(attrs []Attr) []vector.F64 {
+func (t *zippedTable) View(attrs []Attr) []vector.F64 {
 	// fast path first
-	for _, instances := range zi.ii {
-		if (instances.Attrs().ContainsAll(attrs)) {
-			return instances.View(attrs)
+	for _, table := range t.tables {
+		if table.Attrs().ContainsAll(attrs) {
+			return table.View(attrs)
 		}
 	}
 
-	panic("Cross-subinstances view not implemented yet.")
+	panic("Cross-subtable view not implemented yet.")
 }
 
-func concatAttributes(ii []Instances) Attributes {
+func concatAttributes(ii []Table) Attributes {
 	numAttrs := 0
-	for _, instances := range ii {
-		numAttrs += len(instances.Attrs())
+	for _, table := range ii {
+		numAttrs += len(table.Attrs())
 	}
 
 	result := Attributes(make([]Attr, numAttrs))
 
 	index := 0
-	for _, instances := range ii {
-		copy(result[index:], instances.Attrs())
-		index += len(instances.Attrs())
+	for _, table := range ii {
+		copy(result[index:], table.Attrs())
+		index += len(table.Attrs())
 	}
 	return result
 }
 
-func Zip(iinst ...Instances) Instances {
-	length := iinst[0].Len()
-	for _, instances := range iinst {
-		if instances.Len() != length {
+func Zip(tables ...Table) Table {
+	length := tables[0].Len()
+	for _, table := range tables {
+		if table.Len() != length {
 			panic(fmt.Errorf("Length mismatch"))
 		}
 	}
 
-	return &zippedInstances{attrs: concatAttributes(iinst), ii: iinst}
+	return &zippedTable{attrs: concatAttributes(tables), tables: tables}
 }
 
-func (zi *zippedInstances) Get(idx int) Instance {
-	return &zippedInstance{zi: zi, idx: idx}
+func (t *zippedTable) Get(idx int) Row {
+	return &zippedRow{table: t, idx: idx}
 }
 
-func FromRows(rows []vector.F64, attrs []Attr) Instances {
-	return &arrayInstances{attrs: attrs, values: rows}
+func FromRows(rows []vector.F64, attrs []Attr) Table {
+	return &arrayTable{attrs: attrs, values: rows}
 }
 
-type zippedInstance struct {
-	zi *zippedInstances
-	idx int
-}
-
-func (zi *zippedInstance) View(attrs []Attr) vector.F64 {
+func (r *zippedRow) View(attrs []Attr) vector.F64 {
 	// fast path
-	for _, instances := range zi.zi.ii {
-		if (instances.Attrs().ContainsAll(attrs)) {
-			return instances.Get(zi.idx).View(attrs)
+	for _, table := range r.table.tables {
+		if table.Attrs().ContainsAll(attrs) {
+			return table.Get(r.idx).View(attrs)
 		}
 	}
 
-	panic("cross-instance not implemented yet.")
+	panic("cross-row not implemented yet.")
 }
 
-func (zi *zippedInstance) Get(attr Attr) float64 {
+func (r *zippedRow) Get(attr Attr) float64 {
 	// fast path
-	for _, instances := range zi.zi.ii {
-		if (instances.Attrs().Contains(attr)) {
-			return instances.Get(zi.idx).Get(attr)
+	for _, table := range r.table.tables {
+		if table.Attrs().Contains(attr) {
+			return table.Get(r.idx).Get(attr)
 		}
 	}
 
-	panic("cross-instance not implemented yet.")
+	panic("cross-row not implemented yet.")
 }

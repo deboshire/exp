@@ -11,18 +11,18 @@ import (
 	"math/rand"
 )
 
-func readTrainData() (d data.Instances, classAttribute data.Attr) {
-	features := mat.MustRead("Train1X.mat").Array("Train1X").RowsToInstances()
-	labels := mat.MustRead("Train1Y.mat").Array("Train1Y").RowsToInstances()
+func readTrainData() (d data.Table, classAttribute data.Attr) {
+	features := mat.MustRead("Train1X.mat").Array("Train1X").RowsToTable()
+	labels := mat.MustRead("Train1Y.mat").Array("Train1Y").RowsToTable()
 
 	d = data.Zip(features, labels)
 	classAttribute = d.Attrs().ByName("Train1Y.0")
 	return
 }
 
-func readBenchmarkData() data.Instances {
-	benchmarkFeatures := mat.MustRead("Validation1X.mat").Array("Validation1X").Rename("Train1X").RowsToInstances()
-	benchmarkLabels := mat.MustRead("Validation1Y.mat").Array("Validation1Y").Rename("Train1Y").RowsToInstances()
+func readBenchmarkData() data.Table {
+	benchmarkFeatures := mat.MustRead("Validation1X.mat").Array("Validation1X").Rename("Train1X").RowsToTable()
+	benchmarkLabels := mat.MustRead("Validation1Y.mat").Array("Validation1Y").Rename("Train1Y").RowsToTable()
 	return data.Zip(benchmarkFeatures, benchmarkLabels)
 }
 

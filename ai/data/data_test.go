@@ -30,9 +30,9 @@ func TestDataDefinition(t *testing.T) {
 		WeatherData{"rainy", "mild", "high", true, false},
 	}
 
-	instances := Of(d)
+	table := Of(d)
 
-	if instances.Len() != 14 {
-		t.Errorf("Bad length: %d", instances.Len())
+	if table.Len() != 14 {
+		t.Errorf("Bad length: %d", table.Len())
 	}
 }

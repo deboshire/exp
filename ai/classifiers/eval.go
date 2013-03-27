@@ -7,26 +7,26 @@ import (
 
 // Evaluate binary classifier on a given data.
 // Returns percentage of correct hits.
-func Evaluate(c ai.Classifier, instances data.Instances, classAttr data.Attr) float64 {
-	if instances.Len() == 0 {
+func Evaluate(c ai.Classifier, table data.Table, classAttr data.Attr) float64 {
+	if table.Len() == 0 {
 		return 0
 	}
 
 	successes := 0
 
-	for i := 0; i < instances.Len(); i++ {
-		instance := instances.Get(i)
-		class, _ := c.Classify(instance).MostLikelyClass()
-		if class == instance.Get(classAttr) {
+	for i := 0; i < table.Len(); i++ {
+		row := table.Get(i)
+		class, _ := c.Classify(row).MostLikelyClass()
+		if class == row.Get(classAttr) {
 			successes++
 		}
 	}
 
-	return float64(successes) / float64(instances.Len())
+	return float64(successes) / float64(table.Len())
 }
 
-func HoldoutTest(trainer ai.ClassifierTrainer, instances data.Instances, classAttr data.Attr, testingFraction float64) float64 {
-	shuffledData := instances.Shuffled()
+func HoldoutTest(trainer ai.ClassifierTrainer, table data.Table, classAttr data.Attr, testingFraction float64) float64 {
+	shuffledData := table.Shuffled()
 
 	idx := int(float64(shuffledData.Len()) * (1 - testingFraction))
 

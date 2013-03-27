@@ -19,12 +19,12 @@ type LogisticRegressionTrainer struct {
 	Eps      float64
 }
 
-func (t LogisticRegressionTrainer) Train(instances data.Instances, classAttr data.Attr) Classifier {
-	featureAttrs := instances.Attrs().Without(classAttr)
+func (t LogisticRegressionTrainer) Train(table data.Table, classAttr data.Attr) Classifier {
+	featureAttrs := table.Attrs().Without(classAttr)
 
 	y, x := sgrad.Minimize(
-		logisticRegressionCostFunction(instances, classAttr, t.Lambda),
-		v.Zeroes(len(instances.Attrs())-1),
+		logisticRegressionCostFunction(table, classAttr, t.Lambda),
+		v.Zeroes(len(table.Attrs())-1),
 		t.Eps,
 		t.TermCrit,
 		nil)
@@ -37,11 +37,11 @@ func sigmoid(x float64) float64 {
 }
 
 // http://mathurl.com/bmfs3db
-func logisticRegressionCostFunction(instances data.Instances, classAttr data.Attr, lambda float64) sgrad.ObjectiveFunc {
-	featureAttrs := instances.Attrs().Without(classAttr)
+func logisticRegressionCostFunction(table data.Table, classAttr data.Attr, lambda float64) sgrad.ObjectiveFunc {
+	featureAttrs := table.Attrs().Without(classAttr)
 
-	features := instances.View(featureAttrs)
-	labels := instances.View([]data.Attr{classAttr})
+	features := table.View(featureAttrs)
+	labels := table.View([]data.Attr{classAttr})
 
 	f := func(idx int, x v.F64, gradient v.F64) (value float64) {
 		feature := features[idx]
@@ -69,7 +69,7 @@ func logisticRegressionCostFunction(instances data.Instances, classAttr data.Att
 		return
 	}
 
-	return sgrad.ObjectiveFunc{Terms: instances.Len(), F: f}
+	return sgrad.ObjectiveFunc{Terms: table.Len(), F: f}
 }
 
 func (c *logisticRegressionClassifier) ClassType() data.AttrType {
@@ -89,8 +89,8 @@ func (c *logitClassification) MostLikelyClass() (class float64, probability floa
 	return
 }
 
-func (c *logisticRegressionClassifier) Classify(instance data.Instance) Classification {
-	features := instance.View(c.featureAttrs)
+func (c *logisticRegressionClassifier) Classify(row data.Row) Classification {
+	features := row.View(c.featureAttrs)
 	h := sigmoid(c.theta.DotProduct(features))
 	return &logitClassification{h: h}
 }
