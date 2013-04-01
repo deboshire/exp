@@ -1,8 +1,5 @@
 // This utility takes ground truth from MIT+CMU frontal face test set
 // and converts to json file.
-
-// +build manual
-
 package main
 
 import (

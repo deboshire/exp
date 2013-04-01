@@ -1,7 +1,4 @@
 // Pretty prints json with cascades.
-
-// +build manual
-
 package main
 
 import (
