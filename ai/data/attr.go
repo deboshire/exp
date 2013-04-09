@@ -104,7 +104,7 @@ func (attrs Attributes) IndexOf(attr Attr) int {
 		}
 	}
 
-	panic(fmt.Errorf("Attribute %v not found", attr))
+	return -1
 }
 
 func (attr Attr) Repeat(n int) []Attr {

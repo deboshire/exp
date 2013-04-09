@@ -35,6 +35,12 @@ func Zeroes(size int) F64 {
 	return F64(make([]float64, size))
 }
 
+func NaN(size int) F64 {
+	result := F64(make([]float64, size))
+	result.Fill(math.NaN())
+	return result
+}
+
 func (v F64) Fill(a float64) F64 {
 	for i := range v {
 		v[i] = a
@@ -77,6 +83,10 @@ func (v F64) Dist2(v1 F64) float64 {
 	// 	d += a * a
 	// }
 	// return d
+}
+
+func (v F64) Length() float64 {
+	return math.Sqrt(v.DotProduct(v))
 }
 
 func (v F64) Len() int {

@@ -35,7 +35,7 @@ func ExamplePGM7_LogisticRegression_HoldoutTesting() {
 		score := classifiers.HoldoutTest(
 			&ai.LogisticRegressionTrainer{
 				Lambda:   0,
-				TermCrit: &sgrad.NumIterationsCrit{NumIterations: 10},
+				TermCrit: &sgrad.NumIterationsCrit{NumIterations: 10 * trainData.Len()},
 				Eps:      1e-8},
 			trainData,
 			labelAttr,
@@ -67,7 +67,7 @@ func ExamplePGM7_LogisticRegression_Iterations() {
 		fmt.Println("---\niterations: ", iterations)
 		trainer := &ai.LogisticRegressionTrainer{
 			Lambda:   0,
-			TermCrit: &sgrad.NumIterationsCrit{NumIterations: iterations},
+			TermCrit: &sgrad.NumIterationsCrit{NumIterations: iterations * len(trainData.Attrs())},
 			Eps:      1e-8}
 		classifier := trainer.Train(trainData, labelAttr)
 		fmt.Println("train set: ", classifiers.Evaluate(classifier, trainData, labelAttr))
@@ -102,7 +102,7 @@ func ExamplePGM7_LogisticRegression_Epsilon() {
 		fmt.Println("---\nepsilon: ", epsilon)
 		trainer := &ai.LogisticRegressionTrainer{
 			Lambda:   0,
-			TermCrit: &sgrad.RelativeMeanImprovementCrit{},
+			TermCrit: &sgrad.AbsDistanceCrit{},
 			Eps:      epsilon,
 		}
 		classifier := trainer.Train(trainData, labelAttr)
@@ -134,8 +134,8 @@ func ExamplePGM7_LogisticRegression_Lambda() {
 		fmt.Println("---\nlambda: ", lambda)
 		classifier := ai.LogisticRegressionTrainer{
 			Lambda:   lambda,
-			TermCrit: &sgrad.RelativeMeanImprovementCrit{},
-			Eps:      1e-2,
+			TermCrit: &sgrad.AbsDistanceCrit{},
+			Eps:      1e-4,
 		}.Train(trainData, labelAttr)
 		fmt.Println("train set: ", classifiers.Evaluate(classifier, trainData, labelAttr))
 		fmt.Println("benchmark set: ", classifiers.Evaluate(classifier, benchmarkData, labelAttr))
@@ -177,7 +177,7 @@ func ExamplePGM7_LogisticRegression_OptimizeLambda() {
 		score := classifiers.HoldoutTest(
 			ai.LogisticRegressionTrainer{
 				Lambda:   lambda,
-				TermCrit: &sgrad.NumIterationsCrit{NumIterations: 10},
+				TermCrit: &sgrad.NumIterationsCrit{NumIterations: 10 * len(trainData.Attrs())},
 				Eps:      1e-8},
 			trainData,
 			labelAttr,
@@ -190,7 +190,7 @@ func ExamplePGM7_LogisticRegression_OptimizeLambda() {
 	fmt.Println("Optimal lambda:", lambda)
 	classifier := ai.LogisticRegressionTrainer{
 		Lambda:   lambda,
-		TermCrit: &sgrad.NumIterationsCrit{NumIterations: 10},
+		TermCrit: &sgrad.NumIterationsCrit{NumIterations: 10 * len(trainData.Attrs())},
 		Eps:      1e-8}.Train(trainData, labelAttr)
 	fmt.Println("train set: ", classifiers.Evaluate(classifier, trainData, labelAttr))
 	fmt.Println("benchmark set: ", classifiers.Evaluate(classifier, benchmarkData, labelAttr))

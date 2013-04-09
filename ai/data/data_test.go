@@ -1,6 +1,8 @@
 package data
 
 import (
+	"fmt"
+	"github.com/bmizerany/assert"
 	"testing"
 )
 
@@ -31,8 +33,21 @@ func TestDataDefinition(t *testing.T) {
 	}
 
 	table := Of(d)
+	assert.Equal(t, 14, table.Len())
 
-	if table.Len() != 14 {
-		t.Errorf("Bad length: %d", table.Len())
+	s := ""
+	it := table.Iterator([]Attributes{
+		[]Attr{table.Attrs().ByName("Windy")},
+		[]Attr{table.Attrs().ByName("Windy"), table.Attrs().ByName("Play")},
+	})
+	for {
+		row, ok := it()
+		if !ok {
+			break
+		}
+
+		s += fmt.Sprint(row)
+		s += ", "
 	}
+	assert.Equal(t, "[[0] [0 0]], [[1] [1 0]], [[0] [0 1]], [[0] [0 1]], [[0] [0 1]], [[1] [1 0]], [[1] [1 1]], [[0] [0 0]], [[0] [0 1]], [[0] [0 1]], [[1] [1 1]], [[1] [1 1]], [[0] [0 1]], [[1] [1 0]], ", s)
 }
