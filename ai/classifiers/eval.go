@@ -12,12 +12,17 @@ func Evaluate(c ai.Classifier, table data.Table, classAttr data.Attr) float64 {
 		return 0
 	}
 
+	featureAttrs := c.Features()
 	successes := 0
 
-	for i := 0; i < table.Len(); i++ {
-		row := table.Get(i)
-		class, _ := c.Classify(row).MostLikelyClass()
-		if class == row.Get(classAttr) {
+	for it := table.Iterator([]data.Attributes{[]data.Attr{classAttr}, featureAttrs}); ; {
+		row, ok := it()
+		if !ok {
+			break
+		}
+
+		class, _ := c.Classify(row[1]).MostLikelyClass()
+		if class == row[0][0] {
 			successes++
 		}
 	}

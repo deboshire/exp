@@ -7,25 +7,19 @@ import (
 	"reflect"
 )
 
-type Row interface {
-	View(attrs []Attr) vector.F64
-	Get(attr Attr) float64
-}
-
 type Iterator func() (row []vector.F64, ok bool)
 
 type Table interface {
 	Len() int
 	Attrs() Attributes
 
-	Get(idx int) Row
-	View(attrs []Attr) []vector.F64
-
-	Iterator(attrs []Attributes) Iterator
-
 	Perm(perm []int) Table
 	Shuffled() Table
 	Split(idx int) (Table, Table)
+
+	Iterator(attrs []Attributes) Iterator
+	// Iterator that never stops.
+	CyclicIterator(attrs []Attributes) Iterator
 }
 
 func Of(arr interface{}) Table {

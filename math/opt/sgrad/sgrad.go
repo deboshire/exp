@@ -2,6 +2,9 @@
 	Stochastic Gradient Descent
 
 	https://en.wikipedia.org/wiki/Stochastic_gradient_descent
+
+	Minimize a function of the form:
+		Sum_i{F_i(x)}, i := 0...terms
 */
 package sgrad
 
@@ -12,6 +15,37 @@ import (
 	"math"
 	"math/rand"
 )
+
+type ObjectiveFunc func(x vector.F64) (value float64, gradient vector.F64, ok bool)
+
+type Minimizer struct {
+	F       ObjectiveFunc
+	Initial vector.F64
+	Tracer  tracer.Tracer
+	State   *State
+}
+
+type State struct {
+	// Tracer to use
+	Tracer tracer.Tracer
+	// Epoch of minimizer, i.e. how many times Minimize was called
+	Epoch int
+	// Number of iterations performed in current epoch
+	Iter int
+	// Number of iterations performed in previous epochs
+	EpochIter []int
+	// Total number of iterations performed.
+	TotalIter int
+
+	// Value of the function term computed on the last iteration. Quite meaningless
+	Value float64
+
+	// Current X vector
+	X vector.F64
+
+	// Last change of X vector
+	Dx vector.F64
+}
 
 // Termination criterion generates a double error. The error is compared to eps
 // passed to Minimize function and as soon as it is less than eps, optimization
@@ -91,35 +125,16 @@ type NumIterationsCrit struct {
 }
 
 func (c *NumIterationsCrit) ShouldTerminate(s *State) float64 {
-	if s.Iter >= c.NumIterations-1 {
+	if s.Iter >= c.NumIterations - 1 {
 		return 0
 	}
 	return math.MaxFloat64
 
 }
 
-type Minimizer struct {
-	F       ObjectiveFunc
-	Initial vector.F64
-	Tracer  tracer.Tracer
-
-	state *State
-}
-
-type State struct {
-	Tracer tracer.Tracer
-	Iter   int
-	Epoch  int
-	Value  float64
-	X      vector.F64
-	Dx     vector.F64
-}
-
-type ObjectiveFunc func(x vector.F64) (value float64, gradient vector.F64, ok bool)
-
 // sets all fields to default if this is the first call
 func (minimizer *Minimizer) initIfNeeded() {
-	if minimizer.state != nil {
+	if minimizer.State != nil {
 		return
 	}
 
@@ -134,18 +149,13 @@ func (minimizer *Minimizer) initIfNeeded() {
 	}
 
 	// First run.
-	minimizer.state = &State{X: x, Tracer: t}
+	minimizer.State = &State{X: x, Tracer: t}
 }
-
-/*
-	Minimize a function of the form:
-		Sum_i{F_i(x)}, i := 0...terms
-*/
 
 func (minimizer *Minimizer) Minimize(eps float64, term TermCrit) (value float64, coords vector.F64) {
 	minimizer.initIfNeeded()
 
-	s := minimizer.state
+	s := minimizer.State
 	x := s.X
 	t := s.Tracer
 	f := minimizer.F
@@ -154,6 +164,7 @@ func (minimizer *Minimizer) Minimize(eps float64, term TermCrit) (value float64,
 
 	for i := 0; ; i++ {
 		s.Iter = i
+		s.TotalIter++
 
 		// todo(mike): there's some theory about choosing alpha.
 		// http://leon.bottou.org/slides/largescale/lstut.pdf
@@ -187,6 +198,7 @@ func (minimizer *Minimizer) Minimize(eps float64, term TermCrit) (value float64,
 		}
 	}
 
+	s.EpochIter = append(s.EpochIter, s.Iter)
 	return s.Value, s.X
 }
 

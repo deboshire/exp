@@ -1,6 +1,7 @@
 package ai
 
 import (
+	"fmt"
 	"github.com/deboshire/exp/ai/data"
 	"github.com/deboshire/exp/math/opt/sgrad"
 	v "github.com/deboshire/exp/math/vector"
@@ -11,6 +12,7 @@ type logisticRegressionClassifier struct {
 	cost         float64
 	theta        v.F64
 	featureAttrs data.Attributes
+	minimizer    sgrad.Minimizer
 }
 
 type LogisticRegressionTrainer struct {
@@ -28,7 +30,7 @@ func (t LogisticRegressionTrainer) Train(table data.Table, classAttr data.Attr) 
 
 	y, x := minimizer.Minimize(t.Eps, t.TermCrit)
 
-	return &logisticRegressionClassifier{cost: y, theta: x, featureAttrs: featureAttrs}
+	return &logisticRegressionClassifier{cost: y, theta: x, featureAttrs: featureAttrs, minimizer: minimizer}
 }
 
 func sigmoid(x float64) float64 {
@@ -38,7 +40,7 @@ func sigmoid(x float64) float64 {
 // http://mathurl.com/bmfs3db
 func logisticRegressionCostFunction(table data.Table, classAttr data.Attr, lambda float64) sgrad.ObjectiveFunc {
 	featureAttrs := table.Attrs().Without(classAttr)
-	i := table.Iterator([]data.Attributes{[]data.Attr{classAttr}, featureAttrs})
+	i := table.CyclicIterator([]data.Attributes{[]data.Attr{classAttr}, featureAttrs})
 
 	grad := v.Zeroes(len(table.Attrs()) - 1)
 
@@ -76,42 +78,14 @@ func logisticRegressionCostFunction(table data.Table, classAttr data.Attr, lambd
 		return
 	}
 	return f
-	/*	featureAttrs := table.Attrs().Without(classAttr)
-
-		features := table.View(featureAttrs)
-		labels := table.View([]data.Attr{classAttr})
-
-		f := func(idx int, x v.F64, gradient v.F64) (value float64) {
-			feature := features[idx]
-			label := labels[idx][0]
-
-			h := sigmoid(x.DotProduct(feature))
-			feature.CopyTo(gradient)
-
-			if label != 0 {
-				value = -math.Log(h)
-				gradient.Mul(h - 1.0)
-			} else {
-				value = -math.Log(1.0 - h)
-				gradient.Mul(h)
-			}
-
-			if lambda != 0.0 {
-				// apply regularizaiton.
-				for i := 1; i < len(x); i++ {
-					value += 0.5 * lambda * x[i] * x[i]
-					gradient[i] += lambda * x[i]
-				}
-			}
-
-			return
-		}
-
-		return sgrad.ObjectiveFunc{Terms: table.Len(), F: f} */
 }
 
 func (c *logisticRegressionClassifier) ClassType() data.AttrType {
 	return data.TYPE_BOOL
+}
+
+func (c *logisticRegressionClassifier) String() string {
+	return fmt.Sprintf("logisticRegressionClassifier{cost: %v, totalIter: %d}", c.cost, c.minimizer.State.TotalIter)
 }
 
 type logitClassification struct {
@@ -127,8 +101,11 @@ func (c *logitClassification) MostLikelyClass() (class float64, probability floa
 	return
 }
 
-func (c *logisticRegressionClassifier) Classify(row data.Row) Classification {
-	features := row.View(c.featureAttrs)
-	h := sigmoid(c.theta.DotProduct(features))
+func (c *logisticRegressionClassifier) Classify(row v.F64) Classification {
+	h := sigmoid(c.theta.DotProduct(row))
 	return &logitClassification{h: h}
+}
+
+func (c *logisticRegressionClassifier) Features() data.Attributes {
+	return c.featureAttrs
 }

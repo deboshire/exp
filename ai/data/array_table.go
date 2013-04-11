@@ -10,11 +10,6 @@ type arrayTable struct {
 	values []vector.F64 // each values[i] is a row
 }
 
-type arrayRow struct {
-	table *arrayTable
-	idx   int
-}
-
 func FromRows(rows []vector.F64, attrs []Attr) Table {
 	return &arrayTable{attrs: attrs, values: rows}
 }
@@ -50,19 +45,6 @@ func (a *arrayTable) Perm(perm []int) Table {
 	return &arrayTable{attrs: a.attrs, values: values}
 }
 
-func (a *arrayTable) View(attrs []Attr) []vector.F64 {
-	// fast path first
-	if a.attrs.Eq(attrs) {
-		return a.values
-	}
-
-	panic("attr remapping is not implemented")
-}
-
-func (t *arrayTable) Get(idx int) Row {
-	return &arrayRow{table: t, idx: idx}
-}
-
 func (t *arrayTable) idxMap(attrs []Attributes) [][]int {
 	result := make([][]int, len(attrs))
 
@@ -82,11 +64,16 @@ type arrayTableIterator struct {
 	idx    int
 	result []vector.F64
 	idxMap [][]int
+	cyclic bool
 }
 
 func (it *arrayTableIterator) next() (row []vector.F64, ok bool) {
 	if it.idx >= len(it.t.values) {
-		return nil, false
+		if !it.cyclic {
+			return nil, false
+		} else {
+			it.idx = 0
+		}
 	}
 
 	row = it.result
@@ -106,6 +93,7 @@ func (it *arrayTableIterator) next() (row []vector.F64, ok bool) {
 }
 
 func (t *arrayTable) Iterator(attrs []Attributes) Iterator {
+	// TODO: DEDUPE
 	result := make([]vector.F64, len(attrs))
 	idxMap := make([][]int, len(attrs))
 
@@ -121,15 +109,19 @@ func (t *arrayTable) Iterator(attrs []Attributes) Iterator {
 	return Iterator((&arrayTableIterator{t: t, result: result, idxMap: idxMap}).next)
 }
 
-func (r *arrayRow) View(attrs []Attr) vector.F64 {
-	// fast path first
-	if r.table.attrs.Eq(attrs) {
-		return r.table.values[r.idx]
+func (t *arrayTable) CyclicIterator(attrs []Attributes) Iterator {
+	// TODO: DEDUPE
+	result := make([]vector.F64, len(attrs))
+	idxMap := make([][]int, len(attrs))
+
+	for i := range result {
+		result[i] = vector.NaN(len(attrs[i]))
+
+		idxMap[i] = make([]int, len(attrs[i]))
+		for j := range idxMap[i] {
+			idxMap[i][j] = t.Attrs().IndexOf(attrs[i][j])
+		}
 	}
 
-	panic("attr remapping is not implemented")
-}
-
-func (r *arrayRow) Get(attr Attr) float64 {
-	return r.table.values[r.idx][r.table.attrs.IndexOf(attr)]
+	return Iterator((&arrayTableIterator{t: t, result: result, idxMap: idxMap, cyclic: true}).next)
 }

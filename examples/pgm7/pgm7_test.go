@@ -26,6 +26,43 @@ func readBenchmarkData() data.Table {
 	return data.Zip(benchmarkFeatures, benchmarkLabels)
 }
 
+func ExamplePGM7_LogisticRegression_Iterations() {
+	rand.Seed(98765)
+	trainData, labelAttr := readTrainData()
+	benchData := readBenchmarkData()
+
+	for _, iterations := range []int{1, 10, 100, 1000} {
+		fmt.Println("---\niterations: ", iterations)
+		trainer := &ai.LogisticRegressionTrainer{
+			Lambda:   0,
+			TermCrit: &sgrad.NumIterationsCrit{NumIterations: iterations * trainData.Len()},
+			Eps:      1e-8}
+		classifier := trainer.Train(trainData, labelAttr)
+		fmt.Println("classifier:", classifier)
+		fmt.Println("train set: ", classifiers.Evaluate(classifier, trainData, labelAttr))
+		fmt.Println("benchmark set: ", classifiers.Evaluate(classifier, benchData, labelAttr))
+	}
+
+	// Output:
+	// ---
+	// iterations:  1
+	// train set:  0.955
+	// benchmark set:  0.94
+	// ---
+	// iterations:  10
+	// train set:  0.985
+	// benchmark set:  0.925
+	// ---
+	// iterations:  100
+	// train set:  1
+	// benchmark set:  0.925
+	// ---
+	// iterations:  1000
+	// train set:  1
+	// benchmark set:  0.93
+}
+
+
 func ExamplePGM7_LogisticRegression_HoldoutTesting() {
 	rand.Seed(98765)
 	trainData, labelAttr := readTrainData()
@@ -56,41 +93,6 @@ func ExamplePGM7_LogisticRegression_HoldoutTesting() {
 	// ---
 	// fraction:  0.05
 	// Holdout testing: 1
-}
-
-func ExamplePGM7_LogisticRegression_Iterations() {
-	rand.Seed(98765)
-	trainData, labelAttr := readTrainData()
-	benchData := readBenchmarkData()
-
-	for _, iterations := range []int{1, 10, 100, 1000} {
-		fmt.Println("---\niterations: ", iterations)
-		trainer := &ai.LogisticRegressionTrainer{
-			Lambda:   0,
-			TermCrit: &sgrad.NumIterationsCrit{NumIterations: iterations * len(trainData.Attrs())},
-			Eps:      1e-8}
-		classifier := trainer.Train(trainData, labelAttr)
-		fmt.Println("train set: ", classifiers.Evaluate(classifier, trainData, labelAttr))
-		fmt.Println("benchmark set: ", classifiers.Evaluate(classifier, benchData, labelAttr))
-	}
-
-	// Output:
-	// ---
-	// iterations:  1
-	// train set:  0.955
-	// benchmark set:  0.94
-	// ---
-	// iterations:  10
-	// train set:  0.985
-	// benchmark set:  0.925
-	// ---
-	// iterations:  100
-	// train set:  1
-	// benchmark set:  0.925
-	// ---
-	// iterations:  1000
-	// train set:  1
-	// benchmark set:  0.93
 }
 
 func ExamplePGM7_LogisticRegression_Epsilon() {

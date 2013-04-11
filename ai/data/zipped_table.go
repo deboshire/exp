@@ -62,17 +62,6 @@ func (t *zippedTable) Perm(perm []int) Table {
 	}
 }
 
-func (t *zippedTable) View(attrs []Attr) []vector.F64 {
-	// fast path first
-	for _, table := range t.tables {
-		if table.Attrs().ContainsAll(attrs) {
-			return table.View(attrs)
-		}
-	}
-
-	panic("Cross-subtable view not implemented yet.")
-}
-
 func concatAttributes(ii []Table) Attributes {
 	numAttrs := 0
 	for _, table := range ii {
@@ -89,16 +78,7 @@ func concatAttributes(ii []Table) Attributes {
 	return result
 }
 
-func (t *zippedTable) Get(idx int) Row {
-	return &zippedRow{table: t, idx: idx}
-}
-
-func (t *zippedTable) Iterator(attrs []Attributes) Iterator {
-	iterators := make([]Iterator, len(t.tables))
-	for i, t := range t.tables {
-		iterators[i] = t.Iterator(attrs)
-	}
-
+func (t *zippedTable) iterator(attrs []Attributes, iterators []Iterator) Iterator {
 	data := make([]vector.F64, len(attrs))
 
 	for i, a := range attrs {
@@ -156,24 +136,21 @@ func (t *zippedTable) Iterator(attrs []Attributes) Iterator {
 	}
 }
 
-func (r *zippedRow) View(attrs []Attr) vector.F64 {
-	// fast path
-	for _, table := range r.table.tables {
-		if table.Attrs().ContainsAll(attrs) {
-			return table.Get(r.idx).View(attrs)
-		}
+func (t *zippedTable) Iterator(attrs []Attributes) Iterator {
+	iterators := make([]Iterator, len(t.tables))
+	for i, t := range t.tables {
+		iterators[i] = t.Iterator(attrs)
 	}
 
-	panic("cross-row not implemented yet.")
+	return t.iterator(attrs, iterators)
 }
 
-func (r *zippedRow) Get(attr Attr) float64 {
-	// fast path
-	for _, table := range r.table.tables {
-		if table.Attrs().Contains(attr) {
-			return table.Get(r.idx).Get(attr)
-		}
+func (t *zippedTable) CyclicIterator(attrs []Attributes) Iterator {
+	iterators := make([]Iterator, len(t.tables))
+	for i, t := range t.tables {
+		iterators[i] = t.CyclicIterator(attrs)
 	}
 
-	panic("cross-row not implemented yet.")
+	return t.iterator(attrs, iterators)
 }
+

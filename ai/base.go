@@ -2,6 +2,7 @@ package ai
 
 import (
 	"github.com/deboshire/exp/ai/data"
+	"github.com/deboshire/exp/math/vector"
 )
 
 //------------------------------------------------------------------------------
@@ -18,8 +19,11 @@ type Classifier interface {
 	// Describes the class attribute type that this classifier provides.
 	ClassType() data.AttrType
 
+	// List of features that classifier uses. Classify() accepts vectors strictly in this order.
+	Features() data.Attributes
+
 	// Classify a single data row.
-	Classify(row data.Row) Classification
+	Classify(row vector.F64) Classification
 }
 
 type ClassifierTrainer interface {
