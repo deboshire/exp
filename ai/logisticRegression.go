@@ -9,7 +9,6 @@ import (
 )
 
 type logisticRegressionClassifier struct {
-	cost         float64
 	theta        v.F64
 	featureAttrs data.Attributes
 	minimizer    sgrad.Minimizer
@@ -28,9 +27,9 @@ func (t LogisticRegressionTrainer) Train(table data.Table, classAttr data.Attr) 
 		Initial: v.Zeroes(len(table.Attrs()) - 1),
 	}
 
-	y, x := minimizer.Minimize(t.Eps, t.TermCrit)
+	x := minimizer.Minimize(t.Eps, t.TermCrit)
 
-	return &logisticRegressionClassifier{cost: y, theta: x, featureAttrs: featureAttrs, minimizer: minimizer}
+	return &logisticRegressionClassifier{theta: x, featureAttrs: featureAttrs, minimizer: minimizer}
 }
 
 func sigmoid(x float64) float64 {
@@ -85,7 +84,7 @@ func (c *logisticRegressionClassifier) ClassType() data.AttrType {
 }
 
 func (c *logisticRegressionClassifier) String() string {
-	return fmt.Sprintf("logisticRegressionClassifier{cost: %v, totalIter: %d}", c.cost, c.minimizer.State.TotalIter)
+	return fmt.Sprintf("logisticRegressionClassifier{totalIter: %d}", c.minimizer.State.TotalIter)
 }
 
 type logitClassification struct {

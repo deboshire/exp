@@ -6,7 +6,8 @@ import (
 	"github.com/deboshire/exp/ai/classifiers"
 	"github.com/deboshire/exp/ai/data"
 	"github.com/deboshire/exp/io/mat"
-	"github.com/deboshire/exp/math/opt/gssearch"
+	"github.com/deboshire/exp/tracer"
+	// "github.com/deboshire/exp/math/opt/gssearch"
 	"github.com/deboshire/exp/math/opt/sgrad"
 	"math/rand"
 )
@@ -62,7 +63,40 @@ func ExamplePGM7_LogisticRegression_Iterations() {
 	// benchmark set:  0.93
 }
 
+func ExamplePGM7_LogisticRegression_Epsilon() {
+	rand.Seed(98765)
+	trainData, labelAttr := readTrainData()
+	benchmarkData := readBenchmarkData()
 
+	for _, epsilon := range []float64{1e-1, 1e-2, 1e-3, 1e-4} {
+		fmt.Println("---\nepsilon: ", epsilon)
+		trainer := &ai.LogisticRegressionTrainer{
+			Lambda:   0,
+			TermCrit: &sgrad.MaxRelativeChangeCrit{},
+			Eps:      epsilon,
+		}
+		classifier := trainer.Train(trainData, labelAttr)
+		fmt.Println("classifier: ", classifier)
+		fmt.Println("train set: ", classifiers.Evaluate(classifier, trainData, labelAttr))
+		fmt.Println("benchmark set: ", classifiers.Evaluate(classifier, benchmarkData, labelAttr))
+	}
+
+	// Output:
+	// ---
+	// epsilon:  0.1
+	// train set:  0.99
+	// benchmark set:  0.94
+	// ---
+	// epsilon:  0.01
+	// train set:  0.99
+	// benchmark set:  0.925
+	// ---
+	// epsilon:  0.001
+	// train set:  1
+	// benchmark set:  0.93
+}
+
+/*
 func ExamplePGM7_LogisticRegression_HoldoutTesting() {
 	rand.Seed(98765)
 	trainData, labelAttr := readTrainData()
@@ -72,8 +106,8 @@ func ExamplePGM7_LogisticRegression_HoldoutTesting() {
 		score := classifiers.HoldoutTest(
 			&ai.LogisticRegressionTrainer{
 				Lambda:   0,
-				TermCrit: &sgrad.NumIterationsCrit{NumIterations: 10 * trainData.Len()},
-				Eps:      1e-8},
+				TermCrit: &sgrad.MaxRelativeChangeCrit{},
+				Eps:      1e-4},
 			trainData,
 			labelAttr,
 			testingFraction)
@@ -95,38 +129,6 @@ func ExamplePGM7_LogisticRegression_HoldoutTesting() {
 	// Holdout testing: 1
 }
 
-func ExamplePGM7_LogisticRegression_Epsilon() {
-	rand.Seed(98765)
-	trainData, labelAttr := readTrainData()
-	benchmarkData := readBenchmarkData()
-
-	for _, epsilon := range []float64{1e-1, 1e-2, 1e-3} {
-		fmt.Println("---\nepsilon: ", epsilon)
-		trainer := &ai.LogisticRegressionTrainer{
-			Lambda:   0,
-			TermCrit: &sgrad.AbsDistanceCrit{},
-			Eps:      epsilon,
-		}
-		classifier := trainer.Train(trainData, labelAttr)
-		fmt.Println("train set: ", classifiers.Evaluate(classifier, trainData, labelAttr))
-		fmt.Println("benchmark set: ", classifiers.Evaluate(classifier, benchmarkData, labelAttr))
-	}
-
-	// Output:
-	// ---
-	// epsilon:  0.1
-	// train set:  0.99
-	// benchmark set:  0.94
-	// ---
-	// epsilon:  0.01
-	// train set:  0.99
-	// benchmark set:  0.925
-	// ---
-	// epsilon:  0.001
-	// train set:  1
-	// benchmark set:  0.93
-}
-
 func ExamplePGM7_LogisticRegression_Lambda() {
 	rand.Seed(98765)
 	trainData, labelAttr := readTrainData()
@@ -136,7 +138,7 @@ func ExamplePGM7_LogisticRegression_Lambda() {
 		fmt.Println("---\nlambda: ", lambda)
 		classifier := ai.LogisticRegressionTrainer{
 			Lambda:   lambda,
-			TermCrit: &sgrad.AbsDistanceCrit{},
+			TermCrit: &sgrad.MaxRelativeChangeCrit{},
 			Eps:      1e-4,
 		}.Train(trainData, labelAttr)
 		fmt.Println("train set: ", classifiers.Evaluate(classifier, trainData, labelAttr))
@@ -201,4 +203,10 @@ func ExamplePGM7_LogisticRegression_OptimizeLambda() {
 	// Optimal lambda: 1.4841053312063623
 	// train set:  0.895
 	// benchmark set:  0.9
+}
+
+*/
+
+func init() {
+	tracer.SetDefaultTracer(tracer.NewWebTracer())
 }

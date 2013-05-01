@@ -10,6 +10,7 @@ package sgrad
 
 import (
 	"fmt"
+	"github.com/deboshire/exp/math/stat"
 	"github.com/deboshire/exp/math/vector"
 	"github.com/deboshire/exp/tracer"
 	"math"
@@ -55,68 +56,34 @@ type TermCrit interface {
 	ShouldTerminate(s *State) float64
 }
 
-/*
-// Termination criterion that keeps track of relative mean improvement of the
-// function value
-type RelativeMeanImprovementCrit struct {
-	NumItersToAvg int
-	prevVals      []float64
+// Tracks mean of relative coordinate change vector length.
+type MaxRelativeChangeCrit struct {
+	Iters  int
+	window *stat.Window
 }
 
-func (c *RelativeMeanImprovementCrit) ShouldTerminate(s *State) float64 {
-	iters := c.NumItersToAvg
-	if iters < 2 {
-		iters = 5
-	}
-	c.prevVals = append(c.prevVals, s.Value)
+func (c *MaxRelativeChangeCrit) ShouldTerminate(s *State) float64 {
+	if c.window == nil {
+		if c.Iters < 1 {
+			c.Iters = 10
+		}
 
-	if len(c.prevVals) < iters {
-		// not enough values yet.
+		c.window = &stat.Window{N: c.Iters}
+	}
+
+	dxl := s.Dx.Length()
+	sxl := s.X.Length()
+
+	val := dxl / sxl
+
+	c.window.Add(val)
+
+	if !c.window.Full() {
 		return math.MaxFloat64
 	}
 
-	if len(c.prevVals) > iters {
-		c.prevVals = c.prevVals[1:]
-	}
-
-	prevVal := c.prevVals[0]
-	val := s.Value
-	avgImprovement := (prevVal - val) / float64(iters)
-	relAvgImpr := math.Abs(avgImprovement / val)
-	s.Tracer.TraceFloat64("avgImprovement", avgImprovement)
-	s.Tracer.TraceFloat64("relAvgImpr", relAvgImpr)
-	return relAvgImpr
-}
-
-*/
-
-// DONOTSUBMIT - this is a horrible criterion. Implement another one.
-type AbsDistanceCrit struct {
-	NumItersToAvg int
-	prevVals      []float64
-}
-
-func (c *AbsDistanceCrit) ShouldTerminate(s *State) float64 {
-	iters := c.NumItersToAvg
-	if iters < 2 {
-		iters = 5
-	}
-	val := s.Dx.Length()
-	c.prevVals = append(c.prevVals, val)
-
-	if len(c.prevVals) < iters {
-		// not enough values yet.
-		return math.MaxFloat64
-	}
-
-	if len(c.prevVals) > iters {
-		c.prevVals = c.prevVals[1:]
-	}
-
-	prevVal := c.prevVals[0]
-	avgImprovement := (prevVal - val) / float64(iters)
-	s.Tracer.TraceFloat64("avgImprovement", avgImprovement)
-	return math.Abs(avgImprovement)
+	//fmt.Println("dxl:", dxl, "sxl:", sxl, "val:", val)
+	return c.window.Max()
 }
 
 // Termination criterion that terminates after given number of iterations.
@@ -125,7 +92,7 @@ type NumIterationsCrit struct {
 }
 
 func (c *NumIterationsCrit) ShouldTerminate(s *State) float64 {
-	if s.Iter >= c.NumIterations - 1 {
+	if s.Iter >= c.NumIterations-1 {
 		return 0
 	}
 	return math.MaxFloat64
@@ -142,6 +109,7 @@ func (minimizer *Minimizer) initIfNeeded() {
 	if t == nil {
 		t = tracer.DefaultTracer()
 	}
+	t = t.Algorithm("sgrad")
 
 	x := minimizer.Initial
 	if x == nil {
@@ -152,7 +120,7 @@ func (minimizer *Minimizer) initIfNeeded() {
 	minimizer.State = &State{X: x, Tracer: t}
 }
 
-func (minimizer *Minimizer) Minimize(eps float64, term TermCrit) (value float64, coords vector.F64) {
+func (minimizer *Minimizer) Minimize(eps float64, term TermCrit) (coords vector.F64) {
 	minimizer.initIfNeeded()
 
 	s := minimizer.State
@@ -168,8 +136,7 @@ func (minimizer *Minimizer) Minimize(eps float64, term TermCrit) (value float64,
 
 		// todo(mike): there's some theory about choosing alpha.
 		// http://leon.bottou.org/slides/largescale/lstut.pdf
-		alpha := .1 / (1 + math.Sqrt(float64(i)))
-
+		alpha := .1 / (1 + math.Sqrt(float64(s.TotalIter)))
 		t.TraceFloat64("alpha", alpha)
 
 		t.TraceF64("x", x)
@@ -192,14 +159,14 @@ func (minimizer *Minimizer) Minimize(eps float64, term TermCrit) (value float64,
 
 		err := term.ShouldTerminate(s)
 		t.TraceFloat64("err", err)
-		//fmt.Println(i, ",", alpha, ",", x, ",", grad, ",", y, ",", err)
+		// fmt.Println(i, ",", alpha, ",", x, ",", grad, ",", y, ",", err)
 		if err < eps {
 			break
 		}
 	}
 
 	s.EpochIter = append(s.EpochIter, s.Iter)
-	return s.Value, s.X
+	return s.X
 }
 
 /*
