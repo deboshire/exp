@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<script language="javascript" type="text/javascript" src="/s/flot/jquery.min.js"> </script>
+	<script language="javascript" type="text/javascript" src="/s/flot/jquery.flot.min.js"> </script>
+</head>
+<body>
+
+<h1>{{.Name}}</h1>
+
+<canvas width="900" height="400" id="plot"></canvas>
+
+<script language="javascript" type="text/javascript">
+vvvals = "";
+$(function () {
+	var vals = {{.Values}};
+	vvvals = vals;
+	var options = { };
+	$.plot($("#plot"), [vals], options);
+});
+</script>
+
+</body>
+</html>

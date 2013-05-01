@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1>Available variables:</h1>
+
+<ul>
+	{{range .Names}}
+	<li><a href="/v?n={{.}}">{{.}}</a></li>
+	{{end}}
+</ul>
+
+</body>
+</html>
