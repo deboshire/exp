@@ -123,6 +123,14 @@ func (t *webTracer) Algorithm(name string) Tracer {
 	return t.Sub(fmt.Sprintf("%s.%x", name, rand.Int()))
 }
 
+func (t *webTracer) Iter(i int64) Tracer {
+	return t
+}
+
+func (t *webTracer) LastIter(i int64) Tracer {
+	return t.Iter(i)
+}
+
 func (t *webTracer) start() {
 	http.Handle("/s/", http.StripPrefix("/s/", http.FileServer(http.Dir(staticDir))))
 	http.HandleFunc("/", handleRequest)

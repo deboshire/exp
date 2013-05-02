@@ -109,7 +109,6 @@ func (minimizer *Minimizer) initIfNeeded() {
 	if t == nil {
 		t = tracer.DefaultTracer()
 	}
-	t = t.Algorithm("sgrad")
 
 	x := minimizer.Initial
 	if x == nil {
@@ -125,10 +124,12 @@ func (minimizer *Minimizer) Minimize(eps float64, term TermCrit) (coords vector.
 
 	s := minimizer.State
 	x := s.X
-	t := s.Tracer
+	t := s.Tracer.Algorithm("sgrad")
 	f := minimizer.F
 
 	s.Epoch++
+
+	t.TraceFloat64("eps", eps)
 
 	for i := 0; ; i++ {
 		s.Iter = i
@@ -137,9 +138,7 @@ func (minimizer *Minimizer) Minimize(eps float64, term TermCrit) (coords vector.
 		// todo(mike): there's some theory about choosing alpha.
 		// http://leon.bottou.org/slides/largescale/lstut.pdf
 		alpha := .1 / (1 + math.Sqrt(float64(s.TotalIter)))
-		t.TraceFloat64("alpha", alpha)
-
-		t.TraceF64("x", x)
+		//alpha := 1.0 / float64(s.TotalIter)
 
 		y, grad, ok := f(x)
 		if !ok {
@@ -148,9 +147,6 @@ func (minimizer *Minimizer) Minimize(eps float64, term TermCrit) (coords vector.
 		}
 		s.Value = y
 
-		t.TraceF64("grad", grad)
-		t.TraceFloat64("y", y)
-
 		grad.Mul(-alpha)
 		x.Add(grad)
 
@@ -158,7 +154,20 @@ func (minimizer *Minimizer) Minimize(eps float64, term TermCrit) (coords vector.
 		s.X = x
 
 		err := term.ShouldTerminate(s)
+
+		if err < eps {
+			// will break
+			t.LastIter(int64(i))
+		} else {
+			t.Iter(int64(i))
+		}
+
+		t.TraceFloat64("alpha", alpha)
+		t.TraceF64("x", x)
+		t.TraceF64("grad", grad)
+		t.TraceFloat64("y", y)
 		t.TraceFloat64("err", err)
+
 		// fmt.Println(i, ",", alpha, ",", x, ",", grad, ",", y, ",", err)
 		if err < eps {
 			break

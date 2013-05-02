@@ -18,6 +18,8 @@ type Tracer interface {
 
 	Sub(label string) Tracer
 	Algorithm(label string) Tracer
+	Iter(i int64) Tracer
+	LastIter(i int64) Tracer
 }
 
 var (
@@ -52,6 +54,14 @@ func (t *tracerImpl) Algorithm(name string) Tracer {
 	return t.Sub(name)
 }
 
+func (t *tracerImpl) Iter(i int64) Tracer {
+	return t
+}
+
+func (t *tracerImpl) LastIter(i int64) Tracer {
+	return t.Iter(i)
+}
+
 type nullTracer struct{}
 
 func (t *nullTracer) TraceFloat64(label string, value float64) {
@@ -69,6 +79,14 @@ func (t *nullTracer) Sub(label string) Tracer {
 
 func (t *nullTracer) Algorithm(name string) Tracer {
 	return t
+}
+
+func (t *nullTracer) Iter(i int64) Tracer {
+	return t
+}
+
+func (t *nullTracer) LastIter(i int64) Tracer {
+	return t.Iter(i)
 }
 
 func NewNullTracer() Tracer {

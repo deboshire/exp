@@ -50,24 +50,23 @@ func TestLeastSquares_NumIterations(t *testing.T) {
 }
 
 func TestLeastSquares_Epsilon(t *testing.T) {
-	// Demo problem from https://en.wikipedia.org/wiki/Linear_least_squares_(mathematics)
-	minimizer := LeastSquares([]vector.F64{
-		vector.F64{1, 6},
-		vector.F64{2, 5},
-		vector.F64{3, 7},
-		vector.F64{4, 10},
-	})
-	minimizer.Tracer = tracer.DefaultTracer().Sub("ExampleLeastSquares_Epsilon")
-
+	exact := vector.F64{3.5, 1.4}
 	for _, epsilon := range []float64{1e-1, 1e-2, 1e-3, 1e-4, 1e-5} {
 		fmt.Println("---\nepsilon: ", epsilon)
+
+		// Demo problem from https://en.wikipedia.org/wiki/Linear_least_squares_(mathematics)
+		minimizer := LeastSquares([]vector.F64{
+			vector.F64{1, 6},
+			vector.F64{2, 5},
+			vector.F64{3, 7},
+			vector.F64{4, 10},
+		})
+		minimizer.Tracer = tracer.DefaultTracer().Sub("TestLeastSquares_Epsilon")
 		coords := minimizer.Minimize(epsilon, &MaxRelativeChangeCrit{})
-		fmt.Println(coords)
+		fmt.Println(coords, math.Sqrt(coords.Dist2(exact)))
 	}
 
-	// Output:
-	// xxx
-
+	t.Fail()
 }
 
 func BenchmarkLeastSquare(b *testing.B) {
@@ -82,5 +81,5 @@ func BenchmarkLeastSquare(b *testing.B) {
 
 func init() {
 	rand.Seed(1)
-	tracer.SetDefaultTracer(tracer.NewWebTracer())
+	tracer.SetDefaultTracer(tracer.NewConsoleTracer())
 }

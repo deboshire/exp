@@ -8,12 +8,15 @@
 
 <h1>{{.Name}}</h1>
 
-<canvas width="900" height="400" id="plot"></canvas>
+<div style="width:900px;height:400px" id="plot"></div>
 
 <script language="javascript" type="text/javascript">
 vvvals = "";
 $(function () {
-	var vals = {{.Values}};
+	var nvals = {{len .Values}};
+	var vals = [
+		{{ range $idx, $e := .Values }}[{{ $idx }},{{ $e }}], {{ end }}
+	];
 	vvvals = vals;
 	var options = { };
 	$.plot($("#plot"), [vals], options);
