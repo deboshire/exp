@@ -5,6 +5,7 @@ import (
 	"math"
 	"math/rand"
 	"reflect"
+	"strconv"
 	"unsafe"
 )
 
@@ -132,4 +133,17 @@ func (v B) Shuffle() {
 		j := rand.Intn(i)
 		v[i], v[j] = v[j], v[i]
 	}
+}
+
+func Parse(strs []string) (res F64, err error) {
+	res = Zeroes(len(strs))
+
+	for i, str := range strs {
+		parsedFloat, err := strconv.ParseFloat(str, 64)
+		if err != nil {
+			return res, err
+		}
+		res[i] = parsedFloat
+	}
+	return
 }
