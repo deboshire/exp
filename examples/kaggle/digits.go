@@ -6,8 +6,10 @@ import (
 	"github.com/deboshire/exp/ai"
 	"github.com/deboshire/exp/ai/classifiers"
 	"github.com/deboshire/exp/ai/classifiers/knn"
+	"github.com/deboshire/exp/ai/classifiers/logit"
 	"github.com/deboshire/exp/ai/data"
 	"github.com/deboshire/exp/io/csv"
+	"github.com/deboshire/exp/math/opt/sgrad"
 	"os"
 	"runtime/pprof"
 )
@@ -15,7 +17,7 @@ import (
 var trainCsvPath = flag.String("train-csv", "", "Path to train.csv file from kaggle")
 
 func benchmarkClassifier(trainer ai.ClassifierTrainer, table data.Table, labelAttr data.Attr) {
-	fmt.Print("Benchmarking", trainer.Name(), "...")
+	fmt.Print("Benchmarking ", trainer.Name(), "...")
 
 	testingFraction := 0.2
 	result := classifiers.HoldoutTest(trainer, table, labelAttr, testingFraction)
@@ -53,5 +55,7 @@ func main() {
 
 	csvData := readTrainData()
 	labelAttr := csvData.Attrs().ByName("label")
+	// TODO: add bias
+	benchmarkClassifier(logit.Trainer{TermCrit: &sgrad.NumIterationsCrit{NumIterations: 100000}}, csvData, labelAttr)
 	benchmarkClassifier(knn.Trainer{K: 3}, csvData, labelAttr)
 }

@@ -1,7 +1,9 @@
-package ai
+// logistic regression classifier
+package logit
 
 import (
 	"fmt"
+	"github.com/deboshire/exp/ai"
 	"github.com/deboshire/exp/ai/data"
 	"github.com/deboshire/exp/math/opt/sgrad"
 	v "github.com/deboshire/exp/math/vector"
@@ -14,13 +16,13 @@ type logisticRegressionClassifier struct {
 	minimizer    sgrad.Minimizer
 }
 
-type LogisticRegressionTrainer struct {
+type Trainer struct {
 	Lambda   float64
 	TermCrit sgrad.TermCrit
 	Eps      float64
 }
 
-func (t LogisticRegressionTrainer) Train(table data.Table, classAttr data.Attr) Classifier {
+func (t Trainer) Train(table data.Table, classAttr data.Attr) ai.Classifier {
 	featureAttrs := table.Attrs().Without(classAttr)
 	minimizer := sgrad.Minimizer{
 		F:       logisticRegressionCostFunction(table, classAttr, t.Lambda),
@@ -30,6 +32,10 @@ func (t LogisticRegressionTrainer) Train(table data.Table, classAttr data.Attr) 
 	x := minimizer.Minimize(t.Eps, t.TermCrit)
 
 	return &logisticRegressionClassifier{theta: x, featureAttrs: featureAttrs, minimizer: minimizer}
+}
+
+func (t Trainer) Name() string {
+	return "Logistic Regression"
 }
 
 func sigmoid(x float64) float64 {
@@ -100,7 +106,7 @@ func (c *logitClassification) MostLikelyClass() (class float64, probability floa
 	return
 }
 
-func (c *logisticRegressionClassifier) Classify(row v.F64) Classification {
+func (c *logisticRegressionClassifier) Classify(row v.F64) ai.Classification {
 	h := sigmoid(c.theta.DotProduct(row))
 	return &logitClassification{h: h}
 }

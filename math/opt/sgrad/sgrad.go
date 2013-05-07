@@ -155,7 +155,7 @@ func (minimizer *Minimizer) Minimize(eps float64, term TermCrit) (coords vector.
 
 		err := term.ShouldTerminate(s)
 
-		if err < eps {
+		if err <= eps {
 			// will break
 			t.LastIter(int64(i))
 		} else {
@@ -169,7 +169,7 @@ func (minimizer *Minimizer) Minimize(eps float64, term TermCrit) (coords vector.
 		t.TraceFloat64("err", err)
 
 		// fmt.Println(i, ",", alpha, ",", x, ",", grad, ",", y, ",", err)
-		if err < eps {
+		if err <= eps {
 			break
 		}
 	}
