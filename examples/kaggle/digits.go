@@ -1,32 +1,42 @@
 package main
 
 import (
-	"bufio"
-	"encoding/csv"
 	"flag"
 	"fmt"
 	"github.com/deboshire/exp/ai"
 	"github.com/deboshire/exp/ai/classifiers"
-	"github.com/deboshire/exp/math/opt/sgrad"
-	v "github.com/deboshire/exp/math/vector"
+	"github.com/deboshire/exp/ai/classifiers/knn"
+	"github.com/deboshire/exp/ai/data"
+	"github.com/deboshire/exp/io/csv"
 	"os"
 	"runtime/pprof"
-	"strconv"
 )
 
 var trainCsvPath = flag.String("train-csv", "", "Path to train.csv file from kaggle")
 
-func parseVector(strs []string) (res v.F64, err error) {
-	res = v.Zeroes(len(strs))
+func benchmarkClassifier(trainer ai.ClassifierTrainer, table data.Table, labelAttr data.Attr) {
+	fmt.Print("Benchmarking", trainer.Name(), "...")
 
-	for i, str := range strs {
-		parsedFloat, err := strconv.ParseFloat(str, 64)
-		if err != nil {
-			return res, err
-		}
-		res[i] = parsedFloat
+	testingFraction := 0.2
+	result := classifiers.HoldoutTest(trainer, table, labelAttr, testingFraction)
+	fmt.Println(" testingFraction =", testingFraction, " precision =", result)
+}
+
+func readTrainData() data.Table {
+	if *trainCsvPath == "" {
+		panic("--train-csv not set.")
 	}
-	return
+	fmt.Print("Reading training data...")
+
+	csvData, err := csv.ReadFile(*trainCsvPath, true)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(csvData.Len(), "rows")
+
+	labelAttr := csvData.Attrs().ByName("label")
+	csvData.TransformAttr(labelAttr, data.TO_NOMINAL)
+	return csvData
 }
 
 func main() {
@@ -41,49 +51,7 @@ func main() {
 	}
 	defer pprof.StopCPUProfile()
 
-	fmt.Print("Reading training data...")
-	file, err := os.Open(*trainCsvPath)
-	if err != nil {
-		panic(err)
-	}
-	csvReader := csv.NewReader(bufio.NewReader(file))
-	allData, err := csvReader.ReadAll()
-	if err != nil {
-		panic(err)
-	}
-
-	allData = allData[1:] // remove header
-
-	fmt.Println("done:", len(allData), "rows")
-	labels := make([]int, len(allData))
-	pixels := make([]v.F64, len(allData))
-
-	// TODO(mike): add bias term
-	for i, row := range allData {
-		parsedLabel, err := strconv.ParseInt(row[0], 10, 32)
-		if err != nil {
-			panic(err)
-		}
-		labels[i] = int(parsedLabel)
-		pixels[i], err = parseVector(row[1:])
-	}
-
-	// binTrainer := func(features []v.F64, labels []bool) ai.Classifier {
-	// 	fmt.Println("Training binary classifier")
-	// 	classifier := ai.TrainLogisticRegressionClassifier(
-	// 		features,
-	// 		labels,
-	// 		0,
-	// 		&sgrad.NumIterationsCrit{NumIterations: 10},
-	// 		1e-8)
-	// 	return classifier
-	// }
-
-	binTrainer := &ai.LogisticRegressionTrainer{
-		Lambda: 0,
-		TermCrit: &sgrad.NumIterationsCrit{NumIterations: 10},
-		Eps: 1e-8}
-
-	classifier := classifiers.NominalClassifierTrainerFromBinary(pixels, labels, 10, binTrainer)
-	fmt.Println(classifier)
+	csvData := readTrainData()
+	labelAttr := csvData.Attrs().ByName("label")
+	benchmarkClassifier(knn.Trainer{K: 3}, csvData, labelAttr)
 }

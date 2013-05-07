@@ -27,5 +27,7 @@ type Classifier interface {
 }
 
 type ClassifierTrainer interface {
+	Name() string
+
 	Train(table data.Table, classAttribute data.Attr) Classifier
 }
