@@ -2,6 +2,8 @@ package data
 
 import (
 	"fmt"
+	"github.com/deboshire/exp/math/vector"
+	"math"
 )
 
 type AttrKind int16
@@ -27,6 +29,17 @@ type Attr struct {
 }
 
 type Attributes []Attr
+
+type AttrTransform interface {
+	transform(attr Attr, attrs Attributes, values []vector.F64)
+}
+
+type toNominal struct {
+}
+
+var (
+	TO_NOMINAL AttrTransform = &toNominal{}
+)
 
 func (attrs Attributes) ByName(name string) Attr {
 	for _, attr := range attrs {
@@ -114,4 +127,23 @@ func (attr Attr) Repeat(n int) []Attr {
 		result[i].Name = fmt.Sprintf("%s.%d", attr.Name, i)
 	}
 	return result
+}
+
+func (t toNominal) transform(attr Attr, attrs Attributes, values []vector.F64) {
+	maxValue := 0
+	idx := attrs.IndexOf(attr)
+
+	for _, row := range values {
+		i := int(row[idx])
+		row[idx] = float64(i)
+		if i > maxValue {
+			maxValue = i
+		}
+	}
+
+	if maxValue > math.MaxInt16 {
+		panic("too many values")
+	}
+
+	attrs[idx] = Attr{Name: attr.Name, Type: AttrType{Kind: KIND_NOMINAL, NumValues: int16(maxValue + 1)}}
 }

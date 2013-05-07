@@ -20,6 +20,8 @@ type Table interface {
 	Iterator(attrs []Attributes) Iterator
 	// Iterator that never stops.
 	CyclicIterator(attrs []Attributes) Iterator
+
+	TransformAttr(attr Attr, transform AttrTransform)
 }
 
 func Of(arr interface{}) Table {

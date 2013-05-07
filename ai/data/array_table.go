@@ -59,6 +59,10 @@ func (t *arrayTable) idxMap(attrs []Attributes) [][]int {
 	return result
 }
 
+func (t *arrayTable) TransformAttr(attr Attr, transform AttrTransform) {
+	transform.transform(attr, t.attrs, t.values)
+}
+
 type arrayTableIterator struct {
 	t      *arrayTable
 	idx    int

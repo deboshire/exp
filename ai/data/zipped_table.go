@@ -154,3 +154,6 @@ func (t *zippedTable) CyclicIterator(attrs []Attributes) Iterator {
 	return t.iterator(attrs, iterators)
 }
 
+func (t *zippedTable) TransformAttr(attr Attr, transform AttrTransform) {
+	panic("not implemented")
+}
