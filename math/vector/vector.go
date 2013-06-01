@@ -32,6 +32,10 @@ func (v F64) CopyTo(target F64) {
 	copy(target, v)
 }
 
+func (v F64) CopyFrom(src F64) {
+	copy(v, src)
+}
+
 func Zeroes(size int) F64 {
 	return F64(make([]float64, size))
 }
@@ -53,6 +57,14 @@ func (v F64) Sub(v1 F64) {
 	assertSameLen(v, v1)
 	for i := range v {
 		v[i] -= v1[i]
+	}
+}
+
+func (v F64) SubTo(v1 F64, dest F64) {
+	assertSameLen(v, v1)
+	assertSameLen(v, dest)
+	for i := range v {
+		dest[i] = v[i] - v1[i]
 	}
 }
 
@@ -84,6 +96,10 @@ func (v F64) Dist2(v1 F64) float64 {
 	// 	d += a * a
 	// }
 	// return d
+}
+
+func (v F64) Dist(v1 F64) float64 {
+	return math.Sqrt(v.Dist2(v1))
 }
 
 func (v F64) Length() float64 {
