@@ -157,3 +157,15 @@ func (t *zippedTable) CyclicIterator(attrs []Attributes) Iterator {
 func (t *zippedTable) TransformAttr(attr Attr, transform AttrTransform) {
 	panic("not implemented")
 }
+
+func (t *zippedTable) Do(f func(row []vector.F64), attrs []Attributes) {
+	it := t.Iterator(attrs)
+
+	for {
+		row, ok := it()
+		if !ok {
+			return
+		}
+		f(row)
+	}
+}

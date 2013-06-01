@@ -7,6 +7,9 @@ import (
 	"reflect"
 )
 
+// todo: change iterator type to better fit into for() statement.
+// like:
+//     for it.next(&data) { ... }
 type Iterator func() (row []vector.F64, ok bool)
 
 type Table interface {
@@ -22,6 +25,8 @@ type Table interface {
 	CyclicIterator(attrs []Attributes) Iterator
 
 	TransformAttr(attr Attr, transform AttrTransform)
+
+	Do(f func(row []vector.F64), attrs []Attributes)
 }
 
 func Of(arr interface{}) Table {

@@ -129,3 +129,15 @@ func (t *arrayTable) CyclicIterator(attrs []Attributes) Iterator {
 
 	return Iterator((&arrayTableIterator{t: t, result: result, idxMap: idxMap, cyclic: true}).next)
 }
+
+func (t *arrayTable) Do(f func(row []vector.F64), attrs []Attributes) {
+	it := t.Iterator(attrs)
+
+	for {
+		row, ok := it()
+		if !ok {
+			return
+		}
+		f(row)
+	}
+}
