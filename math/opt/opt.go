@@ -6,6 +6,8 @@ import (
 	"math"
 )
 
+// TermCrit is a termination criterion for iterations.
+// Algorithm terminates when ShouldTerminate becomes < epsilon.
 type TermCrit interface {
 	ShouldTerminate(s *State) float64
 }
@@ -34,17 +36,36 @@ func NewState(x0 vector.F64) *State {
 }
 
 func ConvergeWithState(f func(x vector.F64, x1 *vector.F64), state *State, termCrit TermCrit, eps float64) vector.F64 {
+	pushFn := PushConvergeWithState(state, termCrit, eps)
+
+	x1 := state.X.Copy()
+	for {
+		f(state.X, &x1)
+		ok := pushFn(x1)
+		if !ok {
+			return state.X
+		}
+	}
+}
+
+type PushConvergeFn func(x1 vector.F64) bool
+
+func PushConverge(x0 vector.F64, termCrit TermCrit, eps float64) PushConvergeFn {
+	return PushConvergeWithState(NewState(x0), termCrit, eps)
+}
+
+func PushConvergeWithState(state *State, termCrit TermCrit, eps float64) PushConvergeFn {
 	state.Epoch++
 	state.Iter = 0
 
-	for {
-		f(state.X, &state.X1)
+	return func(x1 vector.F64) bool {
+		state.X1.CopyFrom(x1)
 
 		// fmt.Println("x:", state.X, "x1: ", state.X1)
 
 		if termCrit.ShouldTerminate(state) <= eps {
 			state.EpochIter = append(state.EpochIter, state.Iter+1)
-			return state.X1
+			return false
 		}
 
 		temp := state.X
@@ -52,6 +73,7 @@ func ConvergeWithState(f func(x vector.F64, x1 *vector.F64), state *State, termC
 		state.X1 = temp
 		state.Iter++
 		state.TotalIter++
+		return true
 	}
 }
 
@@ -61,7 +83,7 @@ type NumIterationsCrit struct {
 }
 
 func (c *NumIterationsCrit) ShouldTerminate(s *State) float64 {
-	if s.Iter >= c.NumIterations-1 {
+	if s.Iter >= c.NumIterations {
 		return 0
 	}
 	return math.MaxFloat64
