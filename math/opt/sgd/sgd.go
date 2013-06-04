@@ -14,8 +14,62 @@ import (
 	"github.com/deboshire/exp/math/vector"
 	"github.com/deboshire/exp/tracer"
 	"math"
-	"math/rand"
 )
+
+////////////////////////////////////////////////////////////////////////////////
+
+type PushFunction func(value float64, gradient vector.F64)
+type IterationFn func(pushFn PushFunction)
+
+type PushMinimizer struct {
+	X0     vector.F64
+	State  *State
+	Tracer tracer.Tracer
+}
+
+// TODO: dedupe with iteration minimizer
+func (pushMinimizer *PushMinimizer) Minimize(eps float64, termCrit TermCrit, iterationFn IterationFn) (coords vector.F64) {
+	pushMinimizer.initIfNeeded()
+
+	s := pushMinimizer.State
+	t := s.Tracer.Algorithm("sgd")
+
+	t.TraceFloat64("eps", eps)
+
+	// TODO: use push converge
+	return opt.ConvergeWithState(func(x_param vector.F64, x1 *vector.F64) {
+		x1.CopyFrom(x_param)
+		x := *x1
+
+		pushFn := func(value float64, grad vector.F64) {
+			alpha := .1 / (1 + math.Sqrt(float64(s.TotalIter)))
+			grad.Mul(-alpha)
+			x.Add(grad)
+		}
+		iterationFn(pushFn)
+	}, &s.State, termCrit, eps)
+}
+
+// TODO: dedupe
+func (pushMinimizer *PushMinimizer) initIfNeeded() {
+	if pushMinimizer.State != nil {
+		return
+	}
+
+	t := pushMinimizer.Tracer
+	if t == nil {
+		t = tracer.DefaultTracer()
+	}
+
+	x0 := pushMinimizer.X0
+	if x0 == nil {
+		panic(fmt.Errorf("Initial value not set: %q", pushMinimizer))
+	}
+
+	pushMinimizer.State = &State{State: *opt.NewState(x0), Tracer: t}
+}
+
+//////////////////////////////////////////////////////////////////////////////////
 
 type ObjectiveFunc func(x vector.F64) (value float64, gradient vector.F64, ok bool)
 
@@ -95,44 +149,4 @@ func (minimizer *Minimizer) Minimize(eps float64, termCrit TermCrit) (coords vec
 			t.TraceFloat64("y", y)
 		}
 	}, &s.State, termCrit, eps)
-}
-
-/*
-	Objective function for performing least squares optimization.
-*/
-func LeastSquares(points []vector.F64) *Minimizer {
-	dim := len(points[0])
-	length := len(points)
-
-	perm := rand.Perm(len(points))
-	grad := vector.Zeroes(dim)
-	i := 0
-
-	f := func(x vector.F64) (value float64, gradient vector.F64, ok bool) {
-		if i >= length {
-			i = i % length
-			return 0, nil, false
-		}
-		idx := perm[i]
-		i = i + 1
-
-		// The function itself is:
-		// (x[0] + x[1]*row[0] + x[2]*row[1] + .... - row)^2
-		a := x[0]
-		row := points[idx]
-		for i := 0; i < dim-1; i++ {
-			a += x[i+1] * row[i]
-		}
-		a -= row[dim-1]
-
-		// The gradient is
-		// 2a for i == 0, 2*points[idx][i-1]*a for other idx
-		grad[0] = 2 * a
-		for i := 1; i < dim; i++ {
-			grad[i] = 2 * row[i-1] * a
-		}
-		return a*a*0.5 + 1, grad, true
-	}
-
-	return &Minimizer{F: f, X0: vector.Zeroes(dim)}
 }
