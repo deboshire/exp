@@ -9,7 +9,7 @@ import (
 	"github.com/deboshire/exp/ai/classifiers/logit"
 	"github.com/deboshire/exp/ai/data"
 	"github.com/deboshire/exp/io/csv"
-	"github.com/deboshire/exp/math/opt/sgrad"
+	"github.com/deboshire/exp/math/opt"
 	"os"
 	"runtime/pprof"
 )
@@ -56,6 +56,6 @@ func main() {
 	csvData := readTrainData()
 	labelAttr := csvData.Attrs().ByName("label")
 	// TODO: add bias
-	benchmarkClassifier(logit.Trainer{TermCrit: &sgrad.NumIterationsCrit{NumIterations: 100000}}, csvData, labelAttr)
+	benchmarkClassifier(logit.Trainer{TermCrit: &opt.NumIterationsCrit{NumIterations: 100000}}, csvData, labelAttr)
 	benchmarkClassifier(knn.Trainer{K: 3}, csvData, labelAttr)
 }
