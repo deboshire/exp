@@ -213,13 +213,9 @@ func readDataElement(reader io.Reader, encoding binary.ByteOrder) (result interf
 		default:
 			return elems, errors.New(fmt.Sprintf("Unsupported class: %s", class))
 		}
-
-		return elems, nil
 	default:
 		return nil, errors.New(fmt.Sprintf("Unsupported type %s", t))
 	}
-
-	panic("unreachable")
 }
 
 func read(reader io.Reader) (result []interface{}, err error) {

@@ -75,6 +75,4 @@ func minimize(state State, f func(float64) float64, termCrit TermCrit, eps float
 			}
 		}
 	}
-
-	panic("unreachable")
 }
