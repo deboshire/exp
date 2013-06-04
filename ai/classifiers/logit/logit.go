@@ -5,31 +5,37 @@ import (
 	"fmt"
 	"github.com/deboshire/exp/ai"
 	"github.com/deboshire/exp/ai/data"
-	"github.com/deboshire/exp/math/opt/sgrad"
-	v "github.com/deboshire/exp/math/vector"
+	"github.com/deboshire/exp/math/opt/sgd"
+	"github.com/deboshire/exp/math/vector"
 	"math"
 )
 
 type logisticRegressionClassifier struct {
-	theta        v.F64
+	theta        vector.F64
 	featureAttrs data.Attributes
-	minimizer    sgrad.Minimizer
+	minimizer    sgd.PushMinimizer
 }
 
 type Trainer struct {
 	Lambda   float64
-	TermCrit sgrad.TermCrit
+	TermCrit sgd.TermCrit
 	Eps      float64
 }
 
 func (t Trainer) Train(table data.Table, classAttr data.Attr) ai.Classifier {
 	featureAttrs := table.Attrs().Without(classAttr)
-	minimizer := sgrad.Minimizer{
-		F:       logisticRegressionCostFunction(table, classAttr, t.Lambda),
-		Initial: v.Zeroes(len(table.Attrs()) - 1),
+
+	minimizer := sgd.PushMinimizer{
+		X0: vector.Zeroes(len(table.Attrs()) - 1),
 	}
 
-	x := minimizer.Minimize(t.Eps, t.TermCrit)
+	x := minimizer.Minimize(t.Eps, t.TermCrit, func(pushFn sgd.PushFunction) {
+		// TODO: randomize order
+		preallocatedGradient := vector.Zeroes(len(table.Attrs()) - 1)
+		table.Do(func(row []vector.F64) {
+			pushFn(logitFn(minimizer.State.X, row, t.Lambda, preallocatedGradient))
+		}, []data.Attributes{[]data.Attr{classAttr}, featureAttrs})
+	})
 
 	return &logisticRegressionClassifier{theta: x, featureAttrs: featureAttrs, minimizer: minimizer}
 }
@@ -43,46 +49,32 @@ func sigmoid(x float64) float64 {
 }
 
 // http://mathurl.com/bmfs3db
-func logisticRegressionCostFunction(table data.Table, classAttr data.Attr, lambda float64) sgrad.ObjectiveFunc {
-	featureAttrs := table.Attrs().Without(classAttr)
-	i := table.CyclicIterator([]data.Attributes{[]data.Attr{classAttr}, featureAttrs})
+func logitFn(x vector.F64, row []vector.F64, lambda float64, preallocatedGradient vector.F64) (value float64, gradient vector.F64) {
+	gradient = preallocatedGradient
 
-	grad := v.Zeroes(len(table.Attrs()) - 1)
+	label := row[0][0]
+	features := row[1]
 
-	f := func(x v.F64) (value float64, gradient v.F64, ok bool) {
-		row, ok := i()
+	h := sigmoid(x.DotProduct(features))
+	features.CopyTo(gradient)
 
-		if !ok {
-			return 0, nil, false
-		}
-
-		gradient = grad
-
-		label := row[0][0]
-		features := row[1]
-
-		h := sigmoid(x.DotProduct(features))
-		features.CopyTo(gradient)
-
-		if label != 0 {
-			value = -math.Log(h)
-			gradient.Mul(h - 1.0)
-		} else {
-			value = -math.Log(1.0 - h)
-			gradient.Mul(h)
-		}
-
-		if lambda != 0.0 {
-			// apply regularizaiton.
-			for i := 1; i < len(x); i++ {
-				value += 0.5 * lambda * x[i] * x[i]
-				gradient[i] += lambda * x[i]
-			}
-		}
-
-		return
+	if label != 0 {
+		value = -math.Log(h)
+		gradient.Mul(h - 1.0)
+	} else {
+		value = -math.Log(1.0 - h)
+		gradient.Mul(h)
 	}
-	return f
+
+	if lambda != 0.0 {
+		// apply regularizaiton.
+		for i := 1; i < len(x); i++ {
+			value += 0.5 * lambda * x[i] * x[i]
+			gradient[i] += lambda * x[i]
+		}
+	}
+
+	return
 }
 
 func (c *logisticRegressionClassifier) ClassType() data.AttrType {
@@ -106,7 +98,7 @@ func (c *logitClassification) MostLikelyClass() (class float64, probability floa
 	return
 }
 
-func (c *logisticRegressionClassifier) Classify(row v.F64) ai.Classification {
+func (c *logisticRegressionClassifier) Classify(row vector.F64) ai.Classification {
 	h := sigmoid(c.theta.DotProduct(row))
 	return &logitClassification{h: h}
 }
