@@ -10,10 +10,10 @@ import (
 	"math"
 )
 
-type logisticRegressionClassifier struct {
-	theta        vector.F64
-	featureAttrs data.Attributes
-	minimizer    sgd.PushMinimizer
+type LogitClassifier struct {
+	Theta        vector.F64
+	FeatureAttrs data.Attributes
+	Minimizer    sgd.PushMinimizer
 }
 
 type Trainer struct {
@@ -32,12 +32,12 @@ func (t Trainer) Train(table data.Table, classAttr data.Attr) ai.Classifier {
 	x := minimizer.Minimize(t.Eps, t.TermCrit, func(pushFn sgd.PushFunction) {
 		// TODO: randomize order
 		preallocatedGradient := vector.Zeroes(len(table.Attrs()) - 1)
-		table.Do(func(row []vector.F64) {
+		table.Shuffled().Do(func(row []vector.F64) {
 			pushFn(logitFn(minimizer.State.X, row, t.Lambda, preallocatedGradient))
 		}, []data.Attributes{[]data.Attr{classAttr}, featureAttrs})
 	})
 
-	return &logisticRegressionClassifier{theta: x, featureAttrs: featureAttrs, minimizer: minimizer}
+	return &LogitClassifier{Theta: x, FeatureAttrs: featureAttrs, Minimizer: minimizer}
 }
 
 func (t Trainer) Name() string {
@@ -77,12 +77,12 @@ func logitFn(x vector.F64, row []vector.F64, lambda float64, preallocatedGradien
 	return
 }
 
-func (c *logisticRegressionClassifier) ClassType() data.AttrType {
+func (c *LogitClassifier) ClassType() data.AttrType {
 	return data.TYPE_BOOL
 }
 
-func (c *logisticRegressionClassifier) String() string {
-	return fmt.Sprintf("logisticRegressionClassifier{totalIter: %d}", c.minimizer.State.TotalIter)
+func (c *LogitClassifier) String() string {
+	return fmt.Sprintf("LogitClassifier{totalIter: %d}", c.Minimizer.State.TotalIter)
 }
 
 type logitClassification struct {
@@ -98,11 +98,11 @@ func (c *logitClassification) MostLikelyClass() (class float64, probability floa
 	return
 }
 
-func (c *logisticRegressionClassifier) Classify(row vector.F64) ai.Classification {
-	h := sigmoid(c.theta.DotProduct(row))
+func (c *LogitClassifier) Classify(row vector.F64) ai.Classification {
+	h := sigmoid(c.Theta.DotProduct(row))
 	return &logitClassification{h: h}
 }
 
-func (c *logisticRegressionClassifier) Features() data.Attributes {
-	return c.featureAttrs
+func (c *LogitClassifier) Features() data.Attributes {
+	return c.FeatureAttrs
 }
