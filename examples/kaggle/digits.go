@@ -56,6 +56,6 @@ func main() {
 	csvData := readTrainData()
 	labelAttr := csvData.Attrs().ByName("label")
 	// TODO: add bias
-	benchmarkClassifier(logit.Trainer{TermCrit: &opt.NumIterationsCrit{NumIterations: 100000}}, csvData, labelAttr)
+	benchmarkClassifier(logit.Trainer{TermCrit: &opt.NumIterationsCrit{NumIterations: 100}}, csvData, labelAttr)
 	benchmarkClassifier(knn.Trainer{K: 3}, csvData, labelAttr)
 }
